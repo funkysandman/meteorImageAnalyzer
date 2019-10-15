@@ -26,7 +26,9 @@ namespace meteorIngest.Controllers
         public async Task<ActionResult<IEnumerable<SkyImage>>> GetSkyImages()
         {
             // return await _context.SkyImages.ToListAsync();
-            return await _context.SkyImages.Include(c => c.detectedObjects).ToListAsync();
+            return await _context.SkyImages.Include(c => c.detectedObjects)
+                .ThenInclude(si =>si.bbox)
+                .ToListAsync();
         }
 
         // GET: api/SkyImages/5
@@ -34,7 +36,13 @@ namespace meteorIngest.Controllers
         public async Task<ActionResult<SkyImage>> GetSkyImage(int id)
         {
             //var skyImage = await _context.SkyImages.FindAsync(id);
-            var skyImage = await _context.SkyImages.Include(c => c.detectedObjects).FirstOrDefaultAsync(i => i.skyImageId == id);
+            var skyImage = await _context.SkyImages
+                .Include(c => c.detectedObjects)
+                .ThenInclude(si => si.bbox)
+                .FirstOrDefaultAsync(i => i.skyImageId == id);
+
+                
+                
             if (skyImage == null)
             {
                 return NotFound();
