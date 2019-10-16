@@ -62,7 +62,7 @@ namespace meteorIngest.Migrations
                     b.Property<string>("camera")
                         .HasColumnType("TEXT");
 
-                    b.Property<string>("date")
+                    b.Property<DateTime>("date")
                         .HasColumnType("TEXT");
 
                     b.Property<string>("filename")
@@ -72,6 +72,9 @@ namespace meteorIngest.Migrations
                         .HasColumnType("INTEGER");
 
                     b.Property<int?>("imageDataskyImageRefId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("imageSet")
                         .HasColumnType("INTEGER");
 
                     b.Property<int>("width")

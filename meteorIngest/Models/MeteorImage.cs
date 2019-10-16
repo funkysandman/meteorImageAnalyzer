@@ -16,11 +16,13 @@ namespace MeteorIngestAPI.Models
         public int width { get; set; }
         public int height { get; set; }
 
-        public string date { get; set; }
+        public DateTime date { get; set; }
 
         public  ICollection<SkyObjectDetection> detectedObjects {get;set;}
 
         public ImageData imageData { get; set; }
+
+        public int imageSet { get; set; }
     }
 
     public class ImageData

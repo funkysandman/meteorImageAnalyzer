@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore.Migrations;
+﻿using System;
+using Microsoft.EntityFrameworkCore.Migrations;
 
 namespace meteorIngest.Migrations
 {
@@ -45,8 +46,9 @@ namespace meteorIngest.Migrations
                     camera = table.Column<string>(nullable: true),
                     width = table.Column<int>(nullable: false),
                     height = table.Column<int>(nullable: false),
-                    date = table.Column<string>(nullable: true),
-                    imageDataskyImageRefId = table.Column<int>(nullable: true)
+                    date = table.Column<DateTime>(nullable: false),
+                    imageDataskyImageRefId = table.Column<int>(nullable: true),
+                    imageSet = table.Column<int>(nullable: false)
                 },
                 constraints: table =>
                 {

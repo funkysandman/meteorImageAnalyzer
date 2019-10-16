@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using MeteorIngestAPI.Models;
 using System.IO;
+using System.Drawing;
 
 namespace meteorIngest.Controllers
 {
@@ -98,6 +99,13 @@ namespace meteorIngest.Controllers
             {
                 return BadRequest();
             }
+            //
+            //check for image intersections
+            //
+            //new set or existing set
+            var setID = findImageSet(skyImage);
+            skyImage.imageSet = setID;
+
             //get file image
             var imageDataByteArray = Convert.FromBase64String(skyImage.imageData.imageData);
 
@@ -108,33 +116,94 @@ namespace meteorIngest.Controllers
             {
                 byte[] bytes = new byte[imageDataStream.Length];
                 imageDataStream.Read(bytes, 0, (int)imageDataStream.Length);
+            
                 file.Write(bytes, 0, bytes.Length);
                 imageDataStream.Close();
             }
             _context.SkyImages.Add(skyImage);
             await _context.SaveChangesAsync();
-            var skyImage2 = await _context.SkyImages.FindAsync(skyImage.skyImageId);
+            //var skyImage2 = await _context.SkyImages.FindAsync(skyImage.skyImageId);
             return CreatedAtAction(nameof(GetSkyImage), new { id = skyImage.skyImageId }, skyImage);
         }
 
+        private   int findImageSet(SkyImage si)
+        {
+            //gather all images from the last 60 seconds with same camera
+            var cutOffDate = (si.date).Subtract(new TimeSpan(0,0,30));
+            
+            var recentPics = _context.SkyImages.Where(c => c.camera == si.camera && (c.date>cutOffDate))
+                .Include(x=>x.detectedObjects)
+                .ThenInclude(y=> y.bbox).ToList();
 
+            var meteors = si.detectedObjects.Where(x => x.skyObjectClass == "meteor");
+
+
+            foreach (SkyImage skyI in recentPics)
+            {
+                //check if bounding boxes intersect
+                foreach (SkyObjectDetection recentdetObj in skyI.detectedObjects)
+
+                {
+                    if (recentdetObj.skyObjectClass=="meteor")
+                    {
+                        Rectangle r1 = new Rectangle(recentdetObj.bbox.xmin, recentdetObj.bbox.ymin, recentdetObj.bbox.xmax - recentdetObj.bbox.xmin, recentdetObj.bbox.ymax - recentdetObj.bbox.ymin);
+                        foreach (SkyObjectDetection meteordetObj in meteors)
+                        {
+                            Rectangle r2 = new Rectangle(meteordetObj.bbox.xmin, meteordetObj.bbox.ymin, meteordetObj.bbox.xmax - meteordetObj.bbox.xmin, meteordetObj.bbox.ymax - meteordetObj.bbox.ymin);
+                            if (r1.IntersectsWith(r2))
+                            {
+                                //intersection found...add to set
+                                return skyI.imageSet;
+                            }
+                        }
+
+                    }
+                }
+            }
+            //no intersections
+            int maxCount = 0;
+            var maxImage =  _context.SkyImages.OrderByDescending(u => u.imageSet).FirstOrDefault();
+            if (maxImage!=null)
+                            maxCount = maxImage.imageSet;
+            maxCount++;
+            return maxCount;
+        }
 
         // DELETE: api/SkyImages/5
         [HttpDelete("{id}")]
         public async Task<ActionResult<SkyImage>> DeleteSkyImage(int id)
         {
-            var skyImage = await _context.SkyImages.FindAsync(id);
+            var skyImage = await _context.SkyImages
+                .Include(c => c.detectedObjects)
+                .ThenInclude(si => si.bbox).FirstAsync(y => y.skyImageId == id);
+                
+
             if (skyImage == null)
             {
                 return NotFound();
             }
-
+            System.IO.File.Delete(Path.Combine("\\home\\site\\wwwroot\\images\\", skyImage.filename));
             _context.SkyImages.Remove(skyImage);
             await _context.SaveChangesAsync();
 
             return skyImage;
         }
-       
+
+        // DELETE: api/SkyImages
+        [HttpDelete]
+        public async Task<ActionResult<SkyImage>> DeleteAll()
+        {
+            foreach (SkyImage si in _context.SkyImages.Include(c => c.detectedObjects)
+                .ThenInclude(v => v.bbox))
+            {
+                System.IO.File.Delete(Path.Combine("\\home\\site\\wwwroot\\images\\", si.filename));
+                _context.SkyImages.Remove(si);
+
+            }
+            await _context.SaveChangesAsync();
+
+            return null;
+        }
         //[HttpPost()]
         //public string UploadFile()
         //{
@@ -173,7 +242,7 @@ namespace meteorIngest.Controllers
         //        return "Upload Failed";
         //    }
         //}
-        
+
         private bool SkyImageExists(int id)
         {
             return _context.SkyImages.Any(e => e.skyImageId == id);
