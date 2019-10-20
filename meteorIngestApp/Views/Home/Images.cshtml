@@ -1,0 +1,69 @@
+﻿@model IEnumerable<skyImageWS.SkyImage>
+
+@{
+    ViewData["Title"] = "SkyImagesView";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<h1>SkyImagesView</h1>
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>
+                @Html.DisplayNameFor(model => model.SkyImageId)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Filename)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Camera)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Width)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Height)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Date)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.ImageSet)
+            </th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+@foreach (var item in Model) {
+        <tr>
+            <td>
+                @Html.DisplayFor(modelItem => item.SkyImageId)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.Filename)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.Camera)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.Width)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.Height)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.Date)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.ImageSet)
+            </td>
+            <td>
+                @Html.ActionLink("Edit", "Edit", new { /* id=item.PrimaryKey */ }) |
+                @Html.ActionLink("Details", "details", new {  id=item.SkyImageId }) |
+                @Html.ActionLink("Delete", "Delete", new { id=item.SkyImageId  })
+            </td>
+        </tr>
+}
+    </tbody>
+</table>

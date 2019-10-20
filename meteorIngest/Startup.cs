@@ -7,7 +7,7 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.EntityFrameworkCore;
 using MeteorIngestAPI.Models;
-
+using Microsoft.OpenApi.Models;
 
 namespace MeteorIngestAPI
 {
@@ -25,6 +25,12 @@ namespace MeteorIngestAPI
         {
             services.AddDbContext<MeteorIngestContext>(opt => opt.UseSqlite("SkyImages"));
             services.AddControllers();
+            services.AddMvcCore().AddApiExplorer();
+            services.AddSwaggerGen(c =>
+            {
+                c.SwaggerDoc("v1", new OpenApiInfo { Title = "My API", Version = "v1" });
+            });
+
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -34,13 +40,17 @@ namespace MeteorIngestAPI
             {
                 app.UseDeveloperExceptionPage();
             }
+            app.UseSwagger();
 
             app.UseHttpsRedirection();
 
             app.UseRouting();
 
             app.UseAuthorization();
-
+            app.UseSwaggerUI(c =>
+            {
+                c.SwaggerEndpoint("/swagger/v1/swagger.json", "My API V1");
+            });
             app.UseEndpoints(endpoints =>
             {
                 endpoints.MapControllers();

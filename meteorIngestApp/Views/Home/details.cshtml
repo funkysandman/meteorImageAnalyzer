@@ -1,0 +1,117 @@
+﻿@model skyImageWS.SkyImage
+
+@{
+    ViewData["Title"] = "detailsView";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
+<script>
+    function drawImage() {
+
+
+
+        var img = document.getElementById("skyImage");
+        var c = document.getElementById("mycanvas");
+        var context = c.getContext("2d");
+        context.scale(.6, .6);
+        context.drawImage(img, 0, 0);
+        context.beginPath();
+        context.lineWidth = "1";
+        context.strokeStyle = "red";
+        context.font = "20px Arial";
+        context.fillStyle = "red";
+        var skyThingClass = ""
+        var skyThingScore = 0;
+        var label = "";
+       @foreach (var skyThing in Model.DetectedObjects)
+
+        {
+       <text>
+        context.rect("@skyThing.Bbox.Xmin", "@skyThing.Bbox.Ymin", "@(skyThing.Bbox.Xmax-skyThing.Bbox.Xmin)", " @(skyThing.Bbox.Ymax-skyThing.Bbox.Ymin)");
+        skyThingClass = "@skyThing.SkyObjectClass";
+        skyThingScore = @(skyThing.Score*100);
+        label = skyThingScore.toFixed(0).toString() + "% " + skyThingClass;
+        context.fillText(label , "@(skyThing.Bbox.Xmin+3)", "@(skyThing.Bbox.Ymin+30)");
+      </text>
+        
+        }
+        context.stroke();
+        
+        
+    }
+
+</script>
+<h1>detailsView</h1>
+
+<div>
+    <h4>SkyImage</h4>
+    <hr />
+    <dl class="row">
+        <dt class="col-sm-2">
+            @Html.DisplayNameFor(model => model.SkyImageId)
+        </dt>
+        <dd class="col-sm-10">
+            @Html.DisplayFor(model => model.SkyImageId)
+        </dd>
+        <dt class="col-sm-2">
+            @Html.DisplayNameFor(model => model.Filename)
+        </dt>
+        <dd class="col-sm-10">
+            @Html.DisplayFor(model => model.Filename)
+        </dd>
+        <dt class="col-sm-2">
+            @Html.DisplayNameFor(model => model.Camera)
+        </dt>
+        <dd class="col-sm-10">
+            @Html.DisplayFor(model => model.Camera)
+        </dd>
+        <dt class="col-sm-2">
+            @Html.DisplayNameFor(model => model.Width)
+        </dt>
+        <dd class="col-sm-10">
+            @Html.DisplayFor(model => model.Width)
+        </dd>
+        <dt class="col-sm-2">
+            @Html.DisplayNameFor(model => model.Height)
+        </dt>
+        <dd class="col-sm-10">
+            @Html.DisplayFor(model => model.Height)
+        </dd>
+        <dt class="col-sm-2">
+            @Html.DisplayNameFor(model => model.Date)
+        </dt>
+        <dd class="col-sm-10">
+            @Html.DisplayFor(model => model.Date)
+        </dd>
+        <dt class="col-sm-2">
+            @Html.DisplayNameFor(model => model.ImageSet)
+        </dt>
+        <dd class="col-sm-10">
+            @Html.DisplayFor(model => model.ImageSet)
+
+
+        <dt>
+            
+            
+        <dd class="col-sm-10">
+            <canvas width="1920" height="1200" id="mycanvas">
+                <img id="skyImage" onload="drawImage()" src="data:image/png;base64,@Html.DisplayFor(model => model.ImageData.ImageData1)" width="100%" />
+            </canvas>
+        </dd>
+
+        </dt>
+
+    </dl>
+    <dl
+</div>
+<div>
+
+
+
+    @Html.ActionLink("Edit", "Edit", new { /* id = Model.PrimaryKey */ })
+
+    <a asp-action="Index">Back to List</a>
+</div>
+
+
+

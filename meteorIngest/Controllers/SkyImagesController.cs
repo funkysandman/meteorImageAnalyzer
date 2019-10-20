@@ -28,7 +28,7 @@ namespace meteorIngest.Controllers
         {
             // return await _context.SkyImages.ToListAsync();
             return await _context.SkyImages.Include(c => c.detectedObjects)
-                .ThenInclude(si =>si.bbox)
+                .ThenInclude(si =>si.bbox).OrderBy(x=>x.skyImageId)
                 .ToListAsync();
         }
 
@@ -53,11 +53,33 @@ namespace meteorIngest.Controllers
         
         }
 
+        // GET: api/SkyImages/5
+        [HttpGet("full/{id}")]
+        public async Task<ActionResult<SkyImage>> GetSkyImageWithJPG(int id)
+        {
+            //var skyImage = await _context.SkyImages.FindAsync(id);
+            var skyImage = await _context.SkyImages
+                .Include(x => x.imageData)
+                .Include(c => c.detectedObjects)
+                .ThenInclude(si => si.bbox)
+                .FirstOrDefaultAsync(i => i.skyImageId == id);
+
+
+
+            if (skyImage == null)
+            {
+                return NotFound();
+            }
+
+            return skyImage;
+
+        }
+
         // PUT: api/SkyImages/5
         // To protect from overposting attacks, please enable the specific properties you want to bind to, for
         // more details see https://aka.ms/RazorPagesCRUD.
         [HttpPut("{id}")]
-        public async Task<IActionResult> PutSkyImage(int id, SkyImage skyImage)
+        public async Task<IActionResult> PutSkyImage(int id, [FromBody] SkyImage skyImage)
         {
             if (id != skyImage.skyImageId)
             {
@@ -91,7 +113,7 @@ namespace meteorIngest.Controllers
 
 
         [HttpPost]
-        public async Task<ActionResult<SkyImage>> PostSkyImage(SkyImage skyImage)
+        public async Task<ActionResult<SkyImage>> PostSkyImage([FromBody]SkyImage skyImage)
         {
 
           
