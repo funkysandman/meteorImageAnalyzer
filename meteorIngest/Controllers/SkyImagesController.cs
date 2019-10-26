@@ -214,8 +214,7 @@ namespace meteorIngest.Controllers
 
             //save file to azure storage account
             //string storageConnection = CloudConfigurationManager.GetSetting("BlobStorageConnectionString");
-            string storageConnection = "DefaultEndpointsProtocol=https;AccountName=meteorshots;AccountKey=M+rGNU1Ija+Zrs09fVL8FiVj+HVWkx1ji4MvRcSC0Yaa/G+A+MOdN3rAWWCMu8pLBBrFfxM8K4d68FBbsTOmYw==;EndpointSuffix=core.windows.net"; CloudStorageAccount cloudStorageAccount = CloudStorageAccount.Parse(storageConnection);
-
+ 
             //create a block blob 
             CloudBlobClient cloudBlobClient = cloudStorageAccount.CreateCloudBlobClient();
 
