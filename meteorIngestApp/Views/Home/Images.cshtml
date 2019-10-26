@@ -1,4 +1,6 @@
-﻿@model IEnumerable<skyImageWS.SkyImage>
+﻿@model PaginatedList<skyImageWS.SkyImage>
+
+
 
 @{
     ViewData["Title"] = "SkyImagesView";
@@ -7,63 +9,90 @@
 
 <h1>SkyImagesView</h1>
 
+
+@using (Html.BeginForm())
+{
+    <p>
+        Find by name: @Html.TextBox("SearchString")
+        <input type="submit" value="Search" />
+    </p>
+}
+
 <table class="table">
     <thead>
         <tr>
             <th>
-                @Html.DisplayNameFor(model => model.SkyImageId)
+                Sky Image ID
             </th>
             <th>
-                @Html.DisplayNameFor(model => model.Filename)
+                Filename
             </th>
             <th>
-                @Html.DisplayNameFor(model => model.Camera)
+                Camera
             </th>
             <th>
-                @Html.DisplayNameFor(model => model.Width)
+                Objects
             </th>
             <th>
-                @Html.DisplayNameFor(model => model.Height)
+                Date
             </th>
             <th>
-                @Html.DisplayNameFor(model => model.Date)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.ImageSet)
+                Image set
             </th>
             <th></th>
         </tr>
     </thead>
     <tbody>
-@foreach (var item in Model) {
-        <tr>
-            <td>
-                @Html.DisplayFor(modelItem => item.SkyImageId)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Filename)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Camera)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Width)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Height)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Date)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.ImageSet)
-            </td>
-            <td>
-                @Html.ActionLink("Edit", "Edit", new { /* id=item.PrimaryKey */ }) |
-                @Html.ActionLink("Details", "details", new {  id=item.SkyImageId }) |
-                @Html.ActionLink("Delete", "Delete", new { id=item.SkyImageId  })
-            </td>
-        </tr>
-}
+
+        @foreach (var item in Model)
+        {
+
+            string style = item.SelectedForTraining == true ? "background-color:darkseagreen" : null;
+
+            <tr style="@style">
+                <td>
+                    @Html.DisplayFor(modelItem => item.SkyImageId)
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.Filename)
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.Camera)
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.DetectedObjects.Count)
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.Date)
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.ImageSet)
+                </td>
+                <td>
+                    @Html.ActionLink("Edit", "Edit", new { id = item.SkyImageId }) |
+                    @Html.ActionLink("Delete", "Delete", new { id = item.SkyImageId })
+                </td>
+            </tr>
+        }
     </tbody>
 </table>
+<br />
+@{
+    var prevDisabled = !Model.HasPreviousPage ? "disabled" : "";
+    var nextDisabled = !Model.HasNextPage ? "disabled" : "";
+}
+
+<a asp-action="Images"
+   asp-route-sortOrder="@ViewData["CurrentSort"]"
+   asp-route-pageNumber="@(Model.PageIndex - 1)"
+   asp-route-currentFilter="@ViewData["CurrentFilter"]"
+   class="btn btn-default @prevDisabled">
+    Previous
+</a>
+<a asp-action="Images"
+   asp-route-sortOrder="@ViewData["CurrentSort"]"
+   asp-route-pageNumber="@(Model.PageIndex + 1)"
+   asp-route-currentFilter="@ViewData["CurrentFilter"]"
+   class="btn btn-default @nextDisabled">
+    Next
+</a>

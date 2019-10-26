@@ -77,6 +77,9 @@ namespace meteorIngest.Migrations
                     b.Property<int>("imageSet")
                         .HasColumnType("INTEGER");
 
+                    b.Property<bool>("selectedForTraining")
+                        .HasColumnType("INTEGER");
+
                     b.Property<int>("width")
                         .HasColumnType("INTEGER");
 

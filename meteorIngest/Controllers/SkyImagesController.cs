@@ -8,6 +8,10 @@ using Microsoft.EntityFrameworkCore;
 using MeteorIngestAPI.Models;
 using System.IO;
 using System.Drawing;
+using Microsoft.Azure;
+using Microsoft.WindowsAzure.Storage;
+using Microsoft.WindowsAzure.Storage.Blob;
+using System.Text;
 
 namespace meteorIngest.Controllers
 {
@@ -26,11 +30,64 @@ namespace meteorIngest.Controllers
         [HttpGet]
         public async Task<ActionResult<IEnumerable<SkyImage>>> GetSkyImages()
         {
-            // return await _context.SkyImages.ToListAsync();
-            return await _context.SkyImages.Include(c => c.detectedObjects)
-                .ThenInclude(si =>si.bbox).OrderBy(x=>x.skyImageId)
-                .ToListAsync();
+
+
+            var imageList = _context.SkyImages
+                    .FromSqlRaw("Select * from SkyImages a order by  (select count(*) from SkyImages c where c.imageSet = a.imageSet),(select max(score) from SkyObjectDetection where skyImageId=a.skyImageId and skyObjectClass=='meteor') desc")
+                    .ToListAsync<SkyImage>();
+            return await imageList;
+
+            //var sortedImages = from si in _context.SkyImages
+            //                   orderby ((from sod in si.detectedObjects where sod.skyObjectClass == "meteor" select sod).Max(c => c.score)) descending
+            //                   select si;
+
+            //return await sortedImages.ToListAsync();
+
+
+
+            //return await _context.SkyImages.Include(c => c.detectedObjects)
+            //    .ThenInclude(si => si.bbox)
+            //    .ToListAsync();
+
+            //     var highScores = from si in _context.SkyImages 
+            //                      (from sod in si.detectedObjects where sod.skyObjectClass == "meteor"  
+            //                             select sod.score).Max();
+
+            //     //
+
+            //     var highScores =
+            //from skyImage in skyImages
+            //group student by student.Year into studentGroup
+            //select new
+            //{
+            //    Level = studentGroup.Key,
+            //    HighestScore =
+            //    (from student2 in studentGroup
+            //     select student2.ExamScores.Average()).Max()
+            //};
+
+            //     //
+
+
+            //     foreach (var item in highScores)
+            //     {
+            //         Console.WriteLine($"{item.Name,-15}{item.Score}");
+            //     }
+
+
+
         }
+
+        //// GET: api/SkyImages
+        //[HttpGet]
+        //public async Task<ActionResult<IEnumerable<SkyImage>>> GetSkyImagesOrderedByScore()
+        //{
+
+           
+
+
+
+        //}
 
         // GET: api/SkyImages/5
         [HttpGet("{id}")]
@@ -48,7 +105,7 @@ namespace meteorIngest.Controllers
             {
                 return NotFound();
             }
-
+           
             return skyImage;
         
         }
@@ -70,7 +127,25 @@ namespace meteorIngest.Controllers
             {
                 return NotFound();
             }
+            //get image from cloud storage
+            string storageConnection = "DefaultEndpointsProtocol=https;AccountName=meteorshots;AccountKey=M+rGNU1Ija+Zrs09fVL8FiVj+HVWkx1ji4MvRcSC0Yaa/G+A+MOdN3rAWWCMu8pLBBrFfxM8K4d68FBbsTOmYw==;EndpointSuffix=core.windows.net";
 
+            CloudStorageAccount cloudStorageAccount = CloudStorageAccount.Parse(storageConnection);
+            CloudBlobClient blobClient = cloudStorageAccount.CreateCloudBlobClient();
+
+
+
+            CloudBlobContainer cloudBlobContainer = blobClient.GetContainerReference("found");
+            CloudBlockBlob blockBlob = cloudBlobContainer.GetBlockBlobReference(skyImage.filename);
+
+
+
+            MemoryStream memStream = new MemoryStream();
+
+            await blockBlob.DownloadToStreamAsync(memStream);
+            var byteArray = memStream.ToArray();
+            string base64String = Convert.ToBase64String(byteArray);
+            skyImage.imageData.imageData = base64String;
             return skyImage;
 
         }
@@ -134,14 +209,49 @@ namespace meteorIngest.Controllers
             //When creating a stream, you need to reset the position, without it you will see that you always write files with a 0 byte length. 
             var imageDataStream = new MemoryStream(imageDataByteArray);
             imageDataStream.Position = 0;
-            using (FileStream file = new FileStream(Path.Combine("\\home\\site\\wwwroot\\images\\", skyImage.filename), FileMode.Create, System.IO.FileAccess.Write))
+
+            //
+
+            //save file to azure storage account
+            //string storageConnection = CloudConfigurationManager.GetSetting("BlobStorageConnectionString");
+            string storageConnection = "DefaultEndpointsProtocol=https;AccountName=meteorshots;AccountKey=M+rGNU1Ija+Zrs09fVL8FiVj+HVWkx1ji4MvRcSC0Yaa/G+A+MOdN3rAWWCMu8pLBBrFfxM8K4d68FBbsTOmYw==;EndpointSuffix=core.windows.net"; CloudStorageAccount cloudStorageAccount = CloudStorageAccount.Parse(storageConnection);
+
+            //create a block blob 
+            CloudBlobClient cloudBlobClient = cloudStorageAccount.CreateCloudBlobClient();
+
+            //create a container 
+            CloudBlobContainer cloudBlobContainer = cloudBlobClient.GetContainerReference("found");
+
+            //create a container if it is not already exists
+
+            if (await cloudBlobContainer.CreateIfNotExistsAsync())
             {
-                byte[] bytes = new byte[imageDataStream.Length];
-                imageDataStream.Read(bytes, 0, (int)imageDataStream.Length);
-            
-                file.Write(bytes, 0, bytes.Length);
-                imageDataStream.Close();
+
+                await cloudBlobContainer.SetPermissionsAsync(new BlobContainerPermissions { PublicAccess = BlobContainerPublicAccessType.Blob });
+
             }
+
+           
+
+            //get Blob reference
+
+
+
+            //
+            //using (FileStream file = new FileStream(Path.Combine("\\home\\site\\wwwroot\\images\\", skyImage.filename), FileMode.Create, System.IO.FileAccess.Write))
+            //{
+            //    byte[] bytes = new byte[imageDataStream.Length];
+            //    imageDataStream.Read(bytes, 0, (int)imageDataStream.Length);
+            
+            //    file.Write(bytes, 0, bytes.Length);
+            //    imageDataStream.Close();
+            //}
+            
+            CloudBlockBlob cloudBlockBlob = cloudBlobContainer.GetBlockBlobReference(skyImage.filename);
+            cloudBlockBlob.Properties.ContentType= "image/jpg";
+
+            await cloudBlockBlob.UploadFromStreamAsync(imageDataStream);
+            skyImage.imageData.imageData = "";//erase image from database
             _context.SkyImages.Add(skyImage);
             await _context.SaveChangesAsync();
             //var skyImage2 = await _context.SkyImages.FindAsync(skyImage.skyImageId);
@@ -189,6 +299,85 @@ namespace meteorIngest.Controllers
                             maxCount = maxImage.imageSet;
             maxCount++;
             return maxCount;
+        }
+
+        [HttpGet("reorder/")]
+        public async Task<ActionResult> ReorderImageSet()
+        {
+            //gather all images from the last 60 seconds with same camera
+            
+            foreach (SkyImage si in _context.SkyImages)
+            {
+                si.imageSet = -1;
+               
+
+            }
+            await _context.SaveChangesAsync();
+            var allMeteors = _context.SkyImages;
+
+
+            foreach (SkyImage aMeteor in allMeteors)
+            {
+                var cutOffDate = (aMeteor.date).Subtract(new TimeSpan(0, 0, 30));
+
+                var recentPics = _context.SkyImages.Where(c => c.camera == aMeteor.camera && (c.date > cutOffDate))
+                    .Include(x => x.detectedObjects)
+                    .ThenInclude(y => y.bbox).ToList();
+
+                var meteors = aMeteor.detectedObjects.Where(x => x.skyObjectClass == "meteor");
+                int maxCount = 0;
+                var maxImage = _context.SkyImages.OrderByDescending(u => u.imageSet).FirstOrDefault();
+                if (maxImage != null)
+                    maxCount = maxImage.imageSet;
+                maxCount++;
+                aMeteor.imageSet = maxCount;
+                foreach (SkyImage skyI in recentPics)
+                {
+                    //check if bounding boxes intersect
+                    foreach (SkyObjectDetection recentdetObj in skyI.detectedObjects)
+
+                    {
+                        if (recentdetObj.skyObjectClass == "meteor")
+                        {
+                            Rectangle r1 = new Rectangle(recentdetObj.bbox.xmin, recentdetObj.bbox.ymin, recentdetObj.bbox.xmax - recentdetObj.bbox.xmin, recentdetObj.bbox.ymax - recentdetObj.bbox.ymin);
+                            foreach (SkyObjectDetection meteordetObj in meteors)
+                            {
+                                Rectangle r2 = new Rectangle(meteordetObj.bbox.xmin, meteordetObj.bbox.ymin, meteordetObj.bbox.xmax - meteordetObj.bbox.xmin, meteordetObj.bbox.ymax - meteordetObj.bbox.ymin);
+                                if (r1.IntersectsWith(r2))
+                                {
+                                    //intersection found...add to set
+                                    if (skyI.imageSet>-1)
+                                    aMeteor.imageSet= skyI.imageSet;
+                                   
+                                }
+                            }
+
+                        }
+                    }
+                }
+                //no intersections
+
+                _context.Entry(aMeteor).State = EntityState.Modified;
+
+                try
+                {
+                    await _context.SaveChangesAsync();
+                }
+                catch (DbUpdateConcurrencyException)
+                {
+                    if (!SkyImageExists(aMeteor.skyImageId))
+                    {
+                        return NotFound();
+                    }
+                    else
+                    {
+                        throw;
+                    }
+                }
+
+                
+            }
+            return NoContent();
         }
 
         // DELETE: api/SkyImages/5

@@ -23,6 +23,25 @@ namespace MeteorIngestAPI.Models
         public ImageData imageData { get; set; }
 
         public int imageSet { get; set; }
+
+        public bool selectedForTraining { get; set; }
+
+        //public decimal highScore()
+        //{
+            
+        //    decimal bestscore = 0;
+           
+        //    foreach ( SkyObjectDetection so in detectedObjects)
+        //    {
+        //        if (so.skyObjectClass=="meteor")
+        //        {
+        //            if (so.score > bestscore)
+        //                bestscore = so.score;
+        //        }
+        //    }
+        //    return bestscore;
+
+        //}
     }
 
     public class ImageData

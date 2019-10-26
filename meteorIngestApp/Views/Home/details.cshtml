@@ -13,6 +13,12 @@
         var img = document.getElementById("skyImage");
         var c = document.getElementById("mycanvas");
         var context = c.getContext("2d");
+        var reducedWidth = @Model.Width;
+        var reducedHeight = @Model.Height;
+        reducedWidth = reducedWidth * 0.6;
+        reducedHeight = reducedHeight * 0.6;
+        c.width = reducedWidth;
+        c.height = reducedHeight;
         context.scale(.6, .6);
         context.drawImage(img, 0, 0);
         context.beginPath();
@@ -20,6 +26,8 @@
         context.strokeStyle = "red";
         context.font = "20px Arial";
         context.fillStyle = "red";
+        
+      
         var skyThingClass = ""
         var skyThingScore = 0;
         var label = "";
@@ -31,7 +39,7 @@
         skyThingClass = "@skyThing.SkyObjectClass";
         skyThingScore = @(skyThing.Score*100);
         label = skyThingScore.toFixed(0).toString() + "% " + skyThingClass;
-        context.fillText(label , "@(skyThing.Bbox.Xmin+3)", "@(skyThing.Bbox.Ymin+30)");
+        context.fillText(label , "@(skyThing.Bbox.Xmin)", "@(skyThing.Bbox.Ymin-25)");
       </text>
         
         }
@@ -66,16 +74,10 @@
             @Html.DisplayFor(model => model.Camera)
         </dd>
         <dt class="col-sm-2">
-            @Html.DisplayNameFor(model => model.Width)
+            objects
         </dt>
         <dd class="col-sm-10">
-            @Html.DisplayFor(model => model.Width)
-        </dd>
-        <dt class="col-sm-2">
-            @Html.DisplayNameFor(model => model.Height)
-        </dt>
-        <dd class="col-sm-10">
-            @Html.DisplayFor(model => model.Height)
+            @Html.DisplayFor(model => model.DetectedObjects.Count)
         </dd>
         <dt class="col-sm-2">
             @Html.DisplayNameFor(model => model.Date)
@@ -89,12 +91,19 @@
         <dd class="col-sm-10">
             @Html.DisplayFor(model => model.ImageSet)
 
+        </dd>
+        <dt class="col-sm-2">
+            Use for training
+        </dt>
+        <div class="form-group form-check">
+            <label class="form-check-label">
+                <input class="form-check-input" asp-for="SelectedForTraining" /> @Html.DisplayNameFor(model => model.SelectedForTraining)
+            </label>
+        </div>
 
-        <dt>
-            
-            
+        @Html.ActionLink("Edit", "Edit", new { /* id = Model.PrimaryKey */ })
         <dd class="col-sm-10">
-            <canvas width="1920" height="1200" id="mycanvas">
+            <canvas width="100" height="100" id="mycanvas">
                 <img id="skyImage" onload="drawImage()" src="data:image/png;base64,@Html.DisplayFor(model => model.ImageData.ImageData1)" width="100%" />
             </canvas>
         </dd>
@@ -102,13 +111,13 @@
         </dt>
 
     </dl>
-    <dl
+    <div class="form-group">
+        <input type="submit" value="Save" class="btn btn-primary" />
+    </div>
+    
 </div>
-<div>
 
-
-
-    @Html.ActionLink("Edit", "Edit", new { /* id = Model.PrimaryKey */ })
+   
 
     <a asp-action="Index">Back to List</a>
 </div>
