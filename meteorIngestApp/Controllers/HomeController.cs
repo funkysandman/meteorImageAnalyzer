@@ -12,6 +12,7 @@ using System.Text;
 using System.IO;
 using PagedList;
 using PagedList.Core;
+using Microsoft.AspNetCore.Routing;
 
 namespace meteorIngestApp.Controllers
 {
@@ -58,7 +59,7 @@ public class HomeController : Controller
             ViewData["CurrentSort"] = sortOrder;
             ViewData["NameSortParm"] = String.IsNullOrEmpty(sortOrder) ? "name_desc" : "";
             ViewData["DateSortParm"] = sortOrder == "Date" ? "date_desc" : "Date";
-
+            ViewData["CurrentPage"] = pageNumber;
             if (searchString != null)
             {
                 pageNumber = 1;
@@ -107,32 +108,32 @@ public class HomeController : Controller
                     //ViewBag.NameSortParm = String.IsNullOrEmpty(sortOrder) ? "name_desc" : "";
                     //ViewBag.DateSortParm = sortOrder == "Date" ? "date_desc" : "Date";
 
-                    //if (!String.IsNullOrEmpty(searchString))
-                    //{
-                    //    images = images.Where(s => s.Filename.Contains(searchString)
-                    //                           || s.Camera.Contains(searchString));
-                    //}
-                    //switch (sortOrder)
-                    //{
-                    //    case "name_desc":
-                    //        images = images.OrderByDescending(s => s.Filename);
-                    //        break;
-                    //    case "Date":
-                    //        images = images.OrderBy(s => s.Date);
-                    //        break;
-                    //    case "date_desc":
-                    //        images = images.OrderByDescending(s => s.Date);
-                    //        break;
-                    //    default:
-                            
-                    //        break;
-                    //}
+                    if (!String.IsNullOrEmpty(searchString))
+                    {
+                        images = images.Where(s => s.Filename.Contains(searchString)
+                                               || s.Camera.Contains(searchString));
+                    }
+                    switch (sortOrder)
+                    {
+                        case "name_desc":
+                            images = images.OrderByDescending(s => s.Filename);
+                            break;
+                        case "Date":
+                            images = images.OrderBy(s => s.Date);
+                            break;
+                        case "date_desc":
+                            images = images.OrderByDescending(s => s.Date);
+                            break;
+                        default:
 
-                   
-                    
+                            break;
+                    }
+
+
+
                     ////
 
-                    
+
                 }
                     else //web api sent error response 
                     {
@@ -156,11 +157,16 @@ public class HomeController : Controller
 
     
 
-        public IActionResult edit(int id)
+        public IActionResult edit(int id, string sortOrder, string currentFilter, string searchString, int? pageNumber)
         {
 
             skyImageWS.SkyImage image = null;
-
+            ViewData["CurrentSort"] = sortOrder;
+            ViewData["NameSortParm"] = String.IsNullOrEmpty(sortOrder) ? "name_desc" : "";
+            ViewData["DateSortParm"] = sortOrder == "Date" ? "date_desc" : "Date";
+            ViewData["CurrentPage"] = pageNumber;
+            ViewData["CurrentSearchString"] = searchString;
+            TempData["CurrentPage"] = pageNumber;
             using (var client = new HttpClient())
             {
                 client.BaseAddress = new Uri("https://imageingest.azurewebsites.net/api/");
@@ -189,11 +195,15 @@ public class HomeController : Controller
         }
 
 
-        public IActionResult delete(int id)
+        public IActionResult delete(int id, string sortOrder, string currentFilter, string searchString, int? pageNumber)
         {
 
             skyImageWS.SkyImage image = null;
-
+            ViewData["CurrentSort"] = sortOrder;
+            ViewData["NameSortParm"] = String.IsNullOrEmpty(sortOrder) ? "name_desc" : "";
+            ViewData["DateSortParm"] = sortOrder == "Date" ? "date_desc" : "Date";
+            ViewData["CurrentPage"] = pageNumber;
+            ViewData["CurrentSearchString"] = searchString;
             using (var client = new HttpClient())
             {
                 client.BaseAddress = new Uri("https://imageingest.azurewebsites.net/api/");
@@ -219,8 +229,11 @@ public class HomeController : Controller
                     ModelState.AddModelError(string.Empty, "Server error. Please contact administrator.");
                 }
             }
-            return RedirectToAction("Images");
+            return RedirectToAction("Images", new RouteValueDictionary(
+    new { controller = "Home", action = "Images", sortOrder= ViewData["CurrentSort"], currentFilter= ViewData["CurrentFilter"], searchString= ViewData["CurrentSearchString"], pageNumber = ViewData["CurrentPage"] }));
         }
+
+
         public IActionResult Save(skyImageWS.SkyImage si)
         {
 
@@ -237,9 +250,10 @@ public class HomeController : Controller
                 var result = putTask.Result;
                 if (result.IsSuccessStatusCode)
                 {
-
-                    return RedirectToAction("Images");
+                    return RedirectToAction("Images", new RouteValueDictionary(
+                        new { controller = "Home", action = "Images", sortOrder = ViewData["CurrentSort"], currentFilter = ViewData["CurrentFilter"], searchString = ViewData["CurrentSearchString"], pageNumber = TempData["CurrentPage"] }));
                 }
+            
 
               
                
@@ -250,7 +264,8 @@ public class HomeController : Controller
                     image = new skyImageWS.SkyImage();//should be empty
 
                     ModelState.AddModelError(string.Empty, "Server error. Please contact administrator.");
-                    return RedirectToAction("Index");
+                    return RedirectToAction("Images", new RouteValueDictionary(
+    new { controller = "Home", action = "Images", sortOrder = ViewData["CurrentSort"], currentFilter = ViewData["CurrentFilter"], searchString = ViewData["CurrentSearchString"], pageNumber = ViewData["CurrentPage"] }));
                 }
             }
            

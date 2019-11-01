@@ -24,6 +24,8 @@ namespace MeteorIngestAPI.Models
 
         public int imageSet { get; set; }
 
+        public int rank { get; set; }
+
         public bool selectedForTraining { get; set; }
 
         //public decimal highScore()

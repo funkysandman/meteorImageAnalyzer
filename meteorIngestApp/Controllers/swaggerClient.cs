@@ -769,6 +769,9 @@ namespace skyImageWS
         [Newtonsoft.Json.JsonProperty("imageSet", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
         public int ImageSet { get; set; }
 
+        [Newtonsoft.Json.JsonProperty("rank", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+        public int Rank { get; set; }
+
         [Newtonsoft.Json.JsonProperty("selectedForTraining", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
         public bool SelectedForTraining { get; set; }
 

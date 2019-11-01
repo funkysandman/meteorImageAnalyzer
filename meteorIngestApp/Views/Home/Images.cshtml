@@ -39,6 +39,9 @@
             <th>
                 Image set
             </th>
+            <th>
+                Rank
+            </th>
             <th></th>
         </tr>
     </thead>
@@ -49,30 +52,33 @@
 
             string style = item.SelectedForTraining == true ? "background-color:darkseagreen" : null;
 
-            <tr style="@style">
-                <td>
-                    @Html.DisplayFor(modelItem => item.SkyImageId)
-                </td>
-                <td>
-                    @Html.DisplayFor(modelItem => item.Filename)
-                </td>
-                <td>
-                    @Html.DisplayFor(modelItem => item.Camera)
-                </td>
-                <td>
-                    @Html.DisplayFor(modelItem => item.DetectedObjects.Count)
-                </td>
-                <td>
-                    @Html.DisplayFor(modelItem => item.Date)
-                </td>
-                <td>
-                    @Html.DisplayFor(modelItem => item.ImageSet)
-                </td>
-                <td>
-                    @Html.ActionLink("Edit", "Edit", new { id = item.SkyImageId }) |
-                    @Html.ActionLink("Delete", "Delete", new { id = item.SkyImageId })
-                </td>
-            </tr>
+        <tr style="@style">
+            <td>
+                @Html.DisplayFor(modelItem => item.SkyImageId)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.Filename)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.Camera)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.DetectedObjects.Count)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.Date)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.ImageSet)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.Rank)
+            </td>
+            <td>
+                @Html.ActionLink("Edit", "Edit", new { id = item.SkyImageId, sortOrder = ViewData["CurrentSort"], searchString = ViewData["CurrentFilter"], pageNumber = Model.PageIndex }) |
+                @Html.ActionLink("Delete", "Delete", new { id = item.SkyImageId, sortOrder = ViewData["CurrentSort"], searchString = ViewData["CurrentFilter"], pageNumber = Model.PageIndex })
+            </td>
+        </tr>
         }
     </tbody>
 </table>
