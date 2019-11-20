@@ -839,7 +839,6 @@ namespace meteorIngest.Controllers
         //public async Task<ActionResult> GenerateZip()
         //{
         //    //gather all images from the last 60 seconds with same camera
-        //    string storageConnection = "DefaultEndpointsProtocol=https;AccountName=meteorshots;AccountKey=M+rGNU1Ija+Zrs09fVL8FiVj+HVWkx1ji4MvRcSC0Yaa/G+A+MOdN3rAWWCMu8pLBBrFfxM8K4d68FBbsTOmYw==;EndpointSuffix=core.windows.net";
         //    CloudStorageAccount cloudStorageAccount = CloudStorageAccount.Parse(storageConnection);
 
         //    //create a block blob 
