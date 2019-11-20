@@ -11,8 +11,13 @@ using Microsoft.OpenApi.Models;
 
 namespace MeteorIngestAPI
 {
+    public class connectStr
+    {
+        public string _connectStr { get; set; }
+    }
     public class Startup
     {
+        public string _storeageKey = null;
         public Startup(IConfiguration configuration)
         {
             Configuration = configuration;
@@ -30,7 +35,7 @@ namespace MeteorIngestAPI
             {
                 c.SwaggerDoc("v1", new OpenApiInfo { Title = "My API", Version = "v1" });
             });
-
+            services.Configure<connectStr>(Configuration.GetSection("myStorage"));
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

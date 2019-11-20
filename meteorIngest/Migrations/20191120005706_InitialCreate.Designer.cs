@@ -9,8 +9,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace meteorIngest.Migrations
 {
     [DbContext(typeof(MeteorIngestContext))]
-    [Migration("20191027224817_addRank")]
-    partial class addRank
+    [Migration("20191120005706_InitialCreate")]
+    partial class InitialCreate
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
@@ -22,6 +22,9 @@ namespace meteorIngest.Migrations
                 {
                     b.Property<int>("boundingBoxId")
                         .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("skyObjectID")
                         .HasColumnType("INTEGER");
 
                     b.Property<int>("xmax")
@@ -43,14 +46,20 @@ namespace meteorIngest.Migrations
 
             modelBuilder.Entity("MeteorIngestAPI.Models.ImageData", b =>
                 {
-                    b.Property<int>("skyImageRefId")
+                    b.Property<int>("imageID")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER");
 
                     b.Property<string>("imageData")
                         .HasColumnType("TEXT");
 
-                    b.HasKey("skyImageRefId");
+                    b.Property<int>("skyImageId")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("imageID");
+
+                    b.HasIndex("skyImageId")
+                        .IsUnique();
 
                     b.ToTable("ImageData");
                 });
@@ -73,9 +82,6 @@ namespace meteorIngest.Migrations
                     b.Property<int>("height")
                         .HasColumnType("INTEGER");
 
-                    b.Property<int?>("imageDataskyImageRefId")
-                        .HasColumnType("INTEGER");
-
                     b.Property<int>("imageSet")
                         .HasColumnType("INTEGER");
 
@@ -89,8 +95,6 @@ namespace meteorIngest.Migrations
                         .HasColumnType("INTEGER");
 
                     b.HasKey("skyImageId");
-
-                    b.HasIndex("imageDataskyImageRefId");
 
                     b.ToTable("SkyImages");
                 });
@@ -107,7 +111,7 @@ namespace meteorIngest.Migrations
                     b.Property<decimal>("score")
                         .HasColumnType("TEXT");
 
-                    b.Property<int?>("skyImageId")
+                    b.Property<int>("skyImageId")
                         .HasColumnType("INTEGER");
 
                     b.Property<string>("skyObjectClass")
@@ -122,11 +126,13 @@ namespace meteorIngest.Migrations
                     b.ToTable("SkyObjectDetection");
                 });
 
-            modelBuilder.Entity("MeteorIngestAPI.Models.SkyImage", b =>
+            modelBuilder.Entity("MeteorIngestAPI.Models.ImageData", b =>
                 {
-                    b.HasOne("MeteorIngestAPI.Models.ImageData", "imageData")
-                        .WithMany()
-                        .HasForeignKey("imageDataskyImageRefId");
+                    b.HasOne("MeteorIngestAPI.Models.SkyImage", null)
+                        .WithOne("imageData")
+                        .HasForeignKey("MeteorIngestAPI.Models.ImageData", "skyImageId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("MeteorIngestAPI.Models.SkyObjectDetection", b =>
@@ -137,7 +143,9 @@ namespace meteorIngest.Migrations
 
                     b.HasOne("MeteorIngestAPI.Models.SkyImage", null)
                         .WithMany("detectedObjects")
-                        .HasForeignKey("skyImageId");
+                        .HasForeignKey("skyImageId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
                 });
 #pragma warning restore 612, 618
         }

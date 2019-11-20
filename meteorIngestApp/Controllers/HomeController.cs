@@ -73,9 +73,10 @@ public class HomeController : Controller
 
             using (var client = new HttpClient())
                 {
-                    client.BaseAddress = new Uri("https://imageingest.azurewebsites.net/api/");
-                    //HTTP GET
-                    var responseTask = client.GetAsync("skyImages");
+                //client.BaseAddress = new Uri("https://imageingest.azurewebsites.net/api/");
+                client.BaseAddress = new Uri("https://imageingest.azurewebsites.net/api/");
+                //HTTP GET
+                var responseTask = client.GetAsync("skyImages");
                     responseTask.Wait();
 
                     var result = responseTask.Result;
