@@ -21,40 +21,40 @@ namespace meteorIngestApp.Controllers
 
 
 
- public class PageModelList<T> : skyImageWS.SkyImage
-{
-    public IEnumerable<T> Items { get; set; }
-    public int Count
+    public class PageModelList<T> : skyImageWS.SkyImage
     {
-        get
+        public IEnumerable<T> Items { get; set; }
+        public int Count
         {
-            if (Items == null)
+            get
             {
-                return 0;
+                if (Items == null)
+                {
+                    return 0;
+                }
+
+                return Items.Count();
             }
-
-            return Items.Count();
         }
+
+        public IPagedList<T> PList { get; set; }
     }
+    //
 
-    public IPagedList<T> PList { get; set; }
-}
-//
-
-public class HomeController : Controller
+    public class HomeController : Controller
     {
         private readonly ILogger<HomeController> _logger;
-
+        private string webAPIurl = "https://imageingest.azurewebsites.net/api/";
         public HomeController(ILogger<HomeController> logger)
         {
             _logger = logger;
         }
 
-        public async Task<IActionResult> images(string sortOrder,string currentFilter,string searchString, int? pageNumber)
-    //    public IActionResult images(string sortOrder, string currentFilter, string searchString, int? page)
+        public async Task<IActionResult> images(string sortOrder, string currentFilter, string searchString, int? pageNumber)
+        //    public IActionResult images(string sortOrder, string currentFilter, string searchString, int? page)
         {
-           
-                IEnumerable<skyImageWS.SkyImage> images = null;
+
+            IEnumerable<skyImageWS.SkyImage> images = null;
 
             ViewData["CurrentSort"] = sortOrder;
             ViewData["NameSortParm"] = String.IsNullOrEmpty(sortOrder) ? "name_desc" : "";
@@ -72,16 +72,15 @@ public class HomeController : Controller
             ViewData["CurrentFilter"] = searchString;
 
             using (var client = new HttpClient())
-                {
-                //client.BaseAddress = new Uri("https://imageingest.azurewebsites.net/api/");
-                client.BaseAddress = new Uri("https://imageingest.azurewebsites.net/api/");
+            {
+                client.BaseAddress = new Uri(webAPIurl);
                 //HTTP GET
                 var responseTask = client.GetAsync("skyImages");
-                    responseTask.Wait();
+                responseTask.Wait();
 
-                    var result = responseTask.Result;
-                    if (result.IsSuccessStatusCode)
-                    {
+                var result = responseTask.Result;
+                if (result.IsSuccessStatusCode)
+                {
                     var readTask = result.Content.ReadAsAsync<IList<skyImageWS.SkyImage>>();
                     readTask.Wait();
                     //
@@ -102,7 +101,7 @@ public class HomeController : Controller
                             images = images.OrderByDescending(s => s.Date);
                             break;
                         default:
-                           
+
                             break;
                     }
                     //return View(await images.ToList());
@@ -136,27 +135,27 @@ public class HomeController : Controller
 
 
                 }
-                    else //web api sent error response 
-                    {
-                        //log response status here..
+                else //web api sent error response 
+                {
+                    //log response status here..
 
-                        images = Enumerable.Empty<skyImageWS.SkyImage>();
+                    images = Enumerable.Empty<skyImageWS.SkyImage>();
 
-                        ModelState.AddModelError(string.Empty, "Server error. Please contact administrator.");
-                    }
+                    ModelState.AddModelError(string.Empty, "Server error. Please contact administrator.");
                 }
+            }
             int pageSize = 25;
 
             ////return View(images.(pageNumber, pageSize));
             //return View( PaginatedList<skyImageWS.SkyImage>.CreateAsync(images, pageNumber ?? 1, pageSize));
 
-           
+
             return View(await PaginatedList<skyImageWS.SkyImage>.CreateAsync(images, pageNumber ?? 1, pageSize));
-       
 
-    }
 
-    
+        }
+
+
 
         public IActionResult edit(int id, string sortOrder, string currentFilter, string searchString, int? pageNumber)
         {
@@ -170,9 +169,9 @@ public class HomeController : Controller
             TempData["CurrentPage"] = pageNumber;
             using (var client = new HttpClient())
             {
-                client.BaseAddress = new Uri("https://imageingest.azurewebsites.net/api/");
+                client.BaseAddress = new Uri(webAPIurl);
                 //HTTP GET
-                var responseTask = client.GetAsync(String.Format("skyImages/full/{0}",id));
+                var responseTask = client.GetAsync(String.Format("skyImages/full/{0}", id));
                 responseTask.Wait();
 
                 var result = responseTask.Result;
@@ -194,9 +193,79 @@ public class HomeController : Controller
             }
             return View(image);
         }
+        public IActionResult next(int rank, string sortOrder, string currentFilter, string searchString, int? pageNumber)
+        {
 
+            skyImageWS.SkyImage image = null;
+            ViewData["CurrentSort"] = sortOrder;
+            ViewData["NameSortParm"] = String.IsNullOrEmpty(sortOrder) ? "name_desc" : "";
+            ViewData["DateSortParm"] = sortOrder == "Date" ? "date_desc" : "Date";
+            ViewData["CurrentPage"] = pageNumber;
+            ViewData["CurrentSearchString"] = searchString;
+            TempData["CurrentPage"] = pageNumber;
+            using (var client = new HttpClient())
+            {
+                client.BaseAddress = new Uri(webAPIurl);
+                //HTTP GET
+                var responseTask = client.GetAsync(String.Format("skyImages/fullnext/{0}", rank));
+                responseTask.Wait();
 
-        public IActionResult delete(int id, string sortOrder, string currentFilter, string searchString, int? pageNumber)
+                var result = responseTask.Result;
+                if (result.IsSuccessStatusCode)
+                {
+                    var readTask = result.Content.ReadAsAsync<skyImageWS.SkyImage>();
+                    readTask.Wait();
+
+                    image = readTask.Result;
+                }
+                else //web api sent error response 
+                {
+                    //log response status here..
+
+                    image = new skyImageWS.SkyImage();//should be empty
+
+                    ModelState.AddModelError(string.Empty, "Server error. Please contact administrator.");
+                }
+            }
+            return RedirectToAction("Edit", new { id = image.SkyImageId, pageNumber = pageNumber });
+        }
+        public IActionResult prev(int rank, string sortOrder, string currentFilter, string searchString, int? pageNumber)
+        {
+
+            skyImageWS.SkyImage image = null;
+            ViewData["CurrentSort"] = sortOrder;
+            ViewData["NameSortParm"] = String.IsNullOrEmpty(sortOrder) ? "name_desc" : "";
+            ViewData["DateSortParm"] = sortOrder == "Date" ? "date_desc" : "Date";
+            ViewData["CurrentPage"] = pageNumber;
+            ViewData["CurrentSearchString"] = searchString;
+            TempData["CurrentPage"] = pageNumber;
+            using (var client = new HttpClient())
+            {
+                client.BaseAddress = new Uri(webAPIurl);
+                //HTTP GET
+                var responseTask = client.GetAsync(String.Format("skyImages/fullprev/{0}", rank));
+                responseTask.Wait();
+
+                var result = responseTask.Result;
+                if (result.IsSuccessStatusCode)
+                {
+                    var readTask = result.Content.ReadAsAsync<skyImageWS.SkyImage>();
+                    readTask.Wait();
+
+                    image = readTask.Result;
+                }
+                else //web api sent error response 
+                {
+                    //log response status here..
+
+                    image = new skyImageWS.SkyImage();//should be empty
+
+                    ModelState.AddModelError(string.Empty, "Server error. Please contact administrator.");
+                }
+            }
+            return RedirectToAction("Edit", new { id = image.SkyImageId, pageNumber = pageNumber });
+        }
+        public IActionResult delete(int id, int rank, string sortOrder, string currentFilter, string searchString, int? pageNumber)
         {
 
             skyImageWS.SkyImage image = null;
@@ -207,8 +276,8 @@ public class HomeController : Controller
             ViewData["CurrentSearchString"] = searchString;
             using (var client = new HttpClient())
             {
-                client.BaseAddress = new Uri("https://imageingest.azurewebsites.net/api/");
-               // client.BaseAddress = new Uri("https://localhost:44322/api/");
+                client.BaseAddress = new Uri(webAPIurl);
+                // client.BaseAddress = new Uri("https://localhost:44322/api/");
                 //HTTP GET
                 var responseTask = client.DeleteAsync(String.Format("skyImages/{0}", id));
                 responseTask.Wait();
@@ -230,8 +299,8 @@ public class HomeController : Controller
                     ModelState.AddModelError(string.Empty, "Server error. Please contact administrator.");
                 }
             }
-            return RedirectToAction("Images", new RouteValueDictionary(
-    new { controller = "Home", action = "Images", sortOrder= ViewData["CurrentSort"], currentFilter= ViewData["CurrentFilter"], searchString= ViewData["CurrentSearchString"], pageNumber = ViewData["CurrentPage"] }));
+            return RedirectToAction("Next", new RouteValueDictionary(
+    new { controller = "Home", action = "Next", rank = rank, sortOrder = ViewData["CurrentSort"], currentFilter = ViewData["CurrentFilter"], searchString = ViewData["CurrentSearchString"], pageNumber = ViewData["CurrentPage"] }));
         }
 
 
@@ -242,22 +311,23 @@ public class HomeController : Controller
 
             using (var client = new HttpClient())
             {
-                client.BaseAddress = new Uri("https://imageingest.azurewebsites.net/api/");
+                client.BaseAddress = new Uri(webAPIurl);
                 //
                 // var streamWriter = new StreamWriter(client..GetRequestStream());
-                var putTask = client.PutAsJsonAsync<skyImageWS.SkyImage>(String.Format("skyImages/{0}",si.SkyImageId), si);
+                var putTask = client.PutAsJsonAsync<skyImageWS.SkyImage>(String.Format("skyImages/{0}", si.SkyImageId), si);
                 putTask.Wait();
 
                 var result = putTask.Result;
                 if (result.IsSuccessStatusCode)
                 {
-                    return RedirectToAction("Images", new RouteValueDictionary(
-                        new { controller = "Home", action = "Images", sortOrder = ViewData["CurrentSort"], currentFilter = ViewData["CurrentFilter"], searchString = ViewData["CurrentSearchString"], pageNumber = TempData["CurrentPage"] }));
+                    return RedirectToAction("Edit", new RouteValueDictionary(
+                        new { controller = "Home", action = "Edit", id = si.SkyImageId, sortOrder = ViewData["CurrentSort"], currentFilter = ViewData["CurrentFilter"], searchString = ViewData["CurrentSearchString"], pageNumber = TempData["CurrentPage"] }));
                 }
-            
 
-              
-               
+
+                //int id, string sortOrder, string currentFilter, string searchString, int? pageNumber
+
+
                 else //web api sent error response 
                 {
                     //log response status here..
@@ -265,11 +335,11 @@ public class HomeController : Controller
                     image = new skyImageWS.SkyImage();//should be empty
 
                     ModelState.AddModelError(string.Empty, "Server error. Please contact administrator.");
-                    return RedirectToAction("Images", new RouteValueDictionary(
-    new { controller = "Home", action = "Images", sortOrder = ViewData["CurrentSort"], currentFilter = ViewData["CurrentFilter"], searchString = ViewData["CurrentSearchString"], pageNumber = ViewData["CurrentPage"] }));
+                    return RedirectToAction("Edit", new RouteValueDictionary(
+    new { controller = "Home", action = "Edit", id = si.SkyImageId, sortOrder = ViewData["CurrentSort"], currentFilter = ViewData["CurrentFilter"], searchString = ViewData["CurrentSearchString"], pageNumber = ViewData["CurrentPage"] }));
                 }
             }
-           
+
         }
 
         public IActionResult Index()

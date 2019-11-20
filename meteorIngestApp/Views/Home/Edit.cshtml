@@ -4,115 +4,135 @@
     ViewData["Title"] = "Edit";
     Layout = "~/Views/Shared/_Layout.cshtml";
 }
-
-<h1>Edit</h1>
-
-<h4>SkyImage</h4>
 <script>
-    function drawImage() {
+	function normalizeImage() {
 
 
+		var canvas = document.getElementById('SVG1'); //the canvas object
 
-        var img = document.getElementById("skyImage");
-        var c = document.getElementById("mycanvas");
-        var context = c.getContext("2d");
-        var reducedWidth = @Model.Width;
-        var reducedHeight = @Model.Height;
-        reducedWidth = reducedWidth * 1;
-        reducedHeight = reducedHeight * 1;
-        c.width = reducedWidth;
-        c.height = reducedHeight;
-        context.scale(1, 1);
-        context.drawImage(img, 0, 0);
-        context.beginPath();
-        context.lineWidth = "1";
-        context.strokeStyle = "red";
-        context.font = "20px Arial";
-        context.fillStyle = "red";
+	}
 
 
-        var skyThingClass = ""
-        var skyThingScore = 0;
-        var label = "";
-       @foreach (var skyThing in Model.DetectedObjects)
-
-        {
-       <text>
-        context.rect("@skyThing.Bbox.Xmin", "@skyThing.Bbox.Ymin", "@(skyThing.Bbox.Xmax-skyThing.Bbox.Xmin)", " @(skyThing.Bbox.Ymax-skyThing.Bbox.Ymin)");
-        skyThingClass = "@skyThing.SkyObjectClass";
-        skyThingScore = @(skyThing.Score*100);
-        label = skyThingScore.toFixed(0).toString() + "% " + skyThingClass;
-        context.fillText(label , "@(skyThing.Bbox.Xmin)", "@(skyThing.Bbox.Ymin-25)");
-      </text>
-
-        }
-        context.stroke();
-
-
-    }
 
 </script>
+
 <hr />
 <div class="row">
     <div class="col-md-4">
-        <form asp-action="Save">
-            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
-            <div class="col-sm-10">
-                <canvas width="100" height="100" id="mycanvas">
-                    <img id="skyImage" onload="drawImage()" src="data:image/png;base64,@Html.DisplayFor(model => model.ImageData.ImageData1)" width="100%" />
-                </canvas>
-            </div>
-            <div class="form-group form-check">
-                <label class="form-check-label">
-                    <input class="form-check-input" asp-for="SelectedForTraining" /> @Html.DisplayNameFor(model => model.SelectedForTraining)
-                </label>
-            </div>
-            <div class="form-group">
-                <label asp-for="SkyImageId" class="control-label"></label>
-                <input asp-for="SkyImageId" class="form-control" />
-                <span asp-validation-for="SkyImageId" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="Filename" class="control-label"></label>
-                <input asp-for="Filename" class="form-control" />
-                <span asp-validation-for="Filename" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="Camera" class="control-label"></label>
-                <input asp-for="Camera" class="form-control" />
-                <span asp-validation-for="Camera" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="Width" class="control-label"></label>
-                <input asp-for="Width" class="form-control" />
-                <span asp-validation-for="Width" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="Height" class="control-label"></label>
-                <input asp-for="Height" class="form-control" />
-                <span asp-validation-for="Height" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="Date" class="control-label"></label>
-                <input asp-for="Date" class="form-control" />
-                <span asp-validation-for="Date" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="ImageSet" class="control-label"></label>
-                <input asp-for="ImageSet" class="form-control" />
-                <span asp-validation-for="ImageSet" class="text-danger"></span>
-            </div>
+        @Html.ActionLink("Prev", "Prev", new { rank = Model.Rank, sortOrder = ViewData["CurrentSort"], searchString = ViewData["CurrentFilter"], pageNumber = ViewData["CurrentPage"] })
 
-            <div class="form-group">
-                <input id="CurrentPage" type="hidden" value="@ViewData["CurrentPage"]"/>
-                <input type="submit" value="Save" class="btn btn-primary" />
-
-                @Html.ActionLink("Delete", "Delete", new { id = Model.SkyImageId, sortOrder = ViewData["CurrentSort"], searchString = ViewData["CurrentFilter"], pageNumber = ViewData["CurrentPage"] })
-            </div>
-
-        </form>
+    </div>
+    <div class="col-md-4">
+        @Html.ActionLink("Next", "Next", new { rank = Model.Rank, sortOrder = ViewData["CurrentSort"], searchString = ViewData["CurrentFilter"], pageNumber = ViewData["CurrentPage"] })
     </div>
 </div>
+<form asp-action="Save">
+    <div class="row">
+        <div class="col-md-4">
+            <input type="submit" value="Save" class="btn btn-primary" />
+        </div>
+        <div class="col-md-2">
+            @Html.ActionLink("Delete", "Delete", new { id = Model.SkyImageId, rank = Model.Rank, sortOrder = ViewData["CurrentSort"], searchString = ViewData["CurrentFilter"], pageNumber = ViewData["CurrentPage"] })
+        </div>
+    </div>
+    <div class="form-group form-check">
+        <label class="form-check-label">
+            <input class="form-check-input" asp-for="SelectedForTraining" /> @Html.DisplayNameFor(model => model.SelectedForTraining)
+        </label>
+    </div>
+    <div>
+
+        <svg id="SVG1" width="100%" height="100%" viewBox="0 0 @Model.Width @Model.Height">
+            <image href="data:image/png;base64,@Html.DisplayFor(model => model.ImageData.ImageData1)" width="100%" height="100%" />
+            @foreach (var skyThing in Model.DetectedObjects)
+            {
+                <rect x="@(skyThing.Bbox.Xmin)" y="@skyThing.Bbox.Ymin" width="@(skyThing.Bbox.Xmax-skyThing.Bbox.Xmin)" height="@(skyThing.Bbox.Ymax-skyThing.Bbox.Ymin)" style="stroke:pink;fill-opacity:0;stroke-width:2">
+                </rect>
+                @: <text x="@(skyThing.Bbox.Xmin)" y="@(skyThing.Bbox.Ymin-20)" style="stroke:red">@skyThing.SkyObjectClass&nbsp; @(Math.Round(skyThing.Score * 100))% </text>
+            }
+        </svg>
+    </div>
+    <div class="row">
+
+        <div class="row">
+            <div class="col-md-4">
+
+                <div class="form-group">
+                    <input id="CurrentPage" type="hidden" value="@ViewData["CurrentPage"]" />
+                </div>
+                <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+
+                <table cols="2" width="1000">
+                    <tr>
+                        <td>
+                            <div class="form-group">
+                                <label asp-for="SkyImageId" class="control-label"></label>
+                                <input asp-for="SkyImageId" class="form-control" />
+                                <span asp-validation-for="SkyImageId" class="text-danger"></span>
+                            </div>
+                            <div class="form-group">
+                                <label asp-for="Filename" class="control-label"></label>
+                                <input asp-for="Filename" class="form-control" />
+                                <span asp-validation-for="Filename" class="text-danger"></span>
+                            </div>
+                            <div class="form-group">
+                                <label asp-for="Camera" class="control-label"></label>
+                                <input asp-for="Camera" class="form-control" />
+                                <span asp-validation-for="Camera" class="text-danger"></span>
+                            </div>
+                            <div class="form-group">
+                                <label asp-for="Width" class="control-label"></label>
+                                <input asp-for="Width" class="form-control" />
+                                <span asp-validation-for="Width" class="text-danger"></span>
+                            </div>
+                            <div class="form-group">
+                                <label asp-for="Height" class="control-label"></label>
+                                <input asp-for="Height" class="form-control" />
+                                <span asp-validation-for="Height" class="text-danger"></span>
+                            </div>
+                            <div class="form-group">
+                                <label asp-for="Date" class="control-label"></label>
+                                <input asp-for="Date" class="form-control" />
+                                <span asp-validation-for="Date" class="text-danger"></span>
+                            </div>
+                            <div class="form-group">
+                                <label asp-for="ImageSet" class="control-label"></label>
+                                <input asp-for="ImageSet" class="form-control" />
+                                <span asp-validation-for="ImageSet" class="text-danger"></span>
+                            </div>
+                            <div class="form-group">
+                                <label asp-for="Rank" class="control-label"></label>
+                                <input asp-for="Rank" class="form-control" />
+                                <span asp-validation-for="Rank" class="text-danger"></span>
+                            </div>
+                        </td>
+                        <td width="500" align="center">
+                            @foreach (var skyThing in Model.DetectedObjects)
+
+                            {
+                                @:
+                                <div class="align-self-sm-center">
+                                    <label>class:</label>
+                                    <label>@skyThing.SkyObjectClass:@((skyThing.Score * 100).ToString("00"))%  </label><br />
+
+
+
+                                </div>
+
+                            }
+
+
+
+
+                        </td>
+                    </tr>
+                </table>
+
+
+</form>
+</div>
+		</div>
 
 <div>
     <a asp-action="Index">Back to List</a>
