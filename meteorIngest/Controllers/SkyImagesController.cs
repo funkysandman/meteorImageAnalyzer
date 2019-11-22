@@ -582,7 +582,7 @@ namespace meteorIngest.Controllers
                 .Include(x => x.detectedObjects)
                 .ThenInclude(y => y.bbox).ToList();
 
-            var meteors = si.detectedObjects.Where(x => x.skyObjectClass == "meteor");
+            var meteors = si.detectedObjects.Where(x => x.skyObjectClass.Contains("meteor"));
 
 
             foreach (SkyImage skyI in recentPics)
@@ -591,7 +591,7 @@ namespace meteorIngest.Controllers
                 foreach (SkyObjectDetection recentdetObj in skyI.detectedObjects)
 
                 {
-                    if (recentdetObj.skyObjectClass == "meteor")
+                    if (recentdetObj.skyObjectClass.Contains( "meteor"))
                     {
                         Rectangle r1 = new Rectangle(recentdetObj.bbox.xmin, recentdetObj.bbox.ymin, recentdetObj.bbox.xmax - recentdetObj.bbox.xmin, recentdetObj.bbox.ymax - recentdetObj.bbox.ymin);
                         foreach (SkyObjectDetection meteordetObj in meteors)
@@ -682,7 +682,7 @@ namespace meteorIngest.Controllers
             await _context.SaveChangesAsync();
             int rank = 1;
             var imageList = _context.SkyImages
-                    .FromSqlRaw("Select * from SkyImages a order by  (select count(*) from SkyImages c where c.imageSet = a.imageSet),(select max(score) from SkyObjectDetection where skyImageId=a.skyImageId and skyObjectClass=='meteor') desc")
+                    .FromSqlRaw("Select * from SkyImages a order by  (select count(*) from SkyImages c where c.imageSet = a.imageSet),(select max(score) from SkyObjectDetection where skyImageId=a.skyImageId and skyObjectClass like '%meteor') desc")
                     .ToList<SkyImage>();
             foreach (SkyImage skyI in imageList)
             {

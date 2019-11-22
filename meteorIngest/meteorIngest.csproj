@@ -48,7 +48,7 @@
 
   <ItemGroup>
     <None Update="skyImages.db">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
     </None>
   </ItemGroup>
 
