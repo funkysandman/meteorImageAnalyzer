@@ -34,6 +34,9 @@
         <div class="col-md-2">
             @Html.ActionLink("Delete", "Delete", new { id = Model.SkyImageId, rank = Model.Rank, sortOrder = ViewData["CurrentSort"], searchString = ViewData["CurrentFilter"], pageNumber = ViewData["CurrentPage"] })
         </div>
+        <div class="col-md-2">
+            @Html.ActionLink("DeleteImageSet", "DeleteImageSet", new { id = Model.ImageSet, rank = Model.Rank, sortOrder = ViewData["CurrentSort"], searchString = ViewData["CurrentFilter"], pageNumber = ViewData["CurrentPage"] })
+        </div>
     </div>
     <div class="form-group form-check">
         <label class="form-check-label">

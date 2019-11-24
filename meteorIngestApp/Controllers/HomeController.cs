@@ -44,7 +44,8 @@ namespace meteorIngestApp.Controllers
     public class HomeController : Controller
     {
         private readonly ILogger<HomeController> _logger;
-        private string webAPIurl = "https://imageingest.azurewebsites.net/api/";
+        //private string webAPIurl = "https://imageingest.azurewebsites.net/api/";
+        private string webAPIurl = "http://localhost:58611/api/";
         public HomeController(ILogger<HomeController> logger)
         {
             _logger = logger;
@@ -303,7 +304,124 @@ namespace meteorIngestApp.Controllers
     new { controller = "Home", action = "Next", rank = rank, sortOrder = ViewData["CurrentSort"], currentFilter = ViewData["CurrentFilter"], searchString = ViewData["CurrentSearchString"], pageNumber = ViewData["CurrentPage"] }));
         }
 
+        public IActionResult reorder()
+        {
 
+           
+            using (var client = new HttpClient())
+            {
+                client.BaseAddress = new Uri(webAPIurl);
+                // client.BaseAddress = new Uri("https://localhost:44322/api/");
+                //HTTP GET
+                var responseTask = client.GetAsync("skyImages/reorder");
+                responseTask.Wait();
+
+                var result = responseTask.Result;
+                if (result.IsSuccessStatusCode)
+                {
+                   
+                }
+                else //web api sent error response 
+                {
+                    //log response status here..
+
+                  
+
+                    ModelState.AddModelError(string.Empty, "Server error. Please contact administrator.");
+                }
+            }
+            return RedirectToAction("Images");
+                        
+        }
+
+        public IActionResult deleteUnselected()
+        {
+
+
+            using (var client = new HttpClient())
+            {
+                client.BaseAddress = new Uri(webAPIurl);
+                // client.BaseAddress = new Uri("https://localhost:44322/api/");
+                //HTTP GET
+                var responseTask = client.DeleteAsync("skyImages/deleteUnselected");
+                responseTask.Wait();
+
+                var result = responseTask.Result;
+                if (result.IsSuccessStatusCode)
+                {
+
+                }
+                else //web api sent error response 
+                {
+                    //log response status here..
+
+
+
+                    ModelState.AddModelError(string.Empty, "Server error. Please contact administrator.");
+                }
+            }
+            return RedirectToAction("Images");
+
+        }
+
+        public IActionResult deleteImageSet(int id)
+        {
+
+
+            using (var client = new HttpClient())
+            {
+                client.BaseAddress = new Uri(webAPIurl);
+                // client.BaseAddress = new Uri("https://localhost:44322/api/");
+                //HTTP GET
+                var responseTask = client.DeleteAsync(string.Format("skyImages/deleteImageSet/{0}",id));
+                responseTask.Wait();
+
+                var result = responseTask.Result;
+                if (result.IsSuccessStatusCode)
+                {
+
+                }
+                else //web api sent error response 
+                {
+                    //log response status here..
+
+
+
+                    ModelState.AddModelError(string.Empty, "Server error. Please contact administrator.");
+                }
+            }
+            return RedirectToAction("Images");
+
+        }
+        public IActionResult generateXML()
+        {
+
+
+            using (var client = new HttpClient())
+            {
+                client.BaseAddress = new Uri(webAPIurl);
+                // client.BaseAddress = new Uri("https://localhost:44322/api/");
+                //HTTP GET
+                var responseTask = client.GetAsync("skyImages/generateXML");
+                responseTask.Wait();
+
+                var result = responseTask.Result;
+                if (result.IsSuccessStatusCode)
+                {
+
+                }
+                else //web api sent error response 
+                {
+                    //log response status here..
+
+
+
+                    ModelState.AddModelError(string.Empty, "Server error. Please contact administrator.");
+                }
+            }
+            return RedirectToAction("Images");
+
+        }
         public IActionResult Save(skyImageWS.SkyImage si)
         {
 

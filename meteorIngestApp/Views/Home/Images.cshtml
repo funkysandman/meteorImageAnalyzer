@@ -31,7 +31,7 @@
                 Camera
             </th>
             <th>
-                Objects
+                Confidence
             </th>
             <th>
                 Date
@@ -63,7 +63,11 @@
                 @Html.DisplayFor(modelItem => item.Camera)
             </td>
             <td>
-                @Html.DisplayFor(modelItem => item.DetectedObjects.Count)
+                @{
+                    double highScore = item.DetectedObjects.Where(y => y.SkyObjectClass.Contains("meteor")).Max(b => b.Score);
+                    string s = string.Format("{0:00}%", highScore*100);
+                }
+                @Html.DisplayFor(modelItem=>s)
             </td>
             <td>
                 @Html.DisplayFor(modelItem => item.Date)

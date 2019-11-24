@@ -30,7 +30,7 @@ namespace meteorIngest.Controllers
     {
         private readonly MeteorIngestContext _context;
         private readonly IConfiguration _configuration;
-        const bool local = false;
+        const bool local = true;
         public SkyImagesController(MeteorIngestContext context, IConfiguration configuration )
         {
             _context = context;
@@ -710,16 +710,23 @@ namespace meteorIngest.Controllers
 
             return NoContent();
         }
+
+
+
+
         [HttpGet("generateXML/")]
         public async Task<ActionResult> GenerateXML()
         {
+            CloudBlobContainer cloudBlobContainer;
 
+            if (!local) { 
             string storageConnection = _configuration.GetSection("myStorage").Value;
             CloudStorageAccount cloudStorageAccount = CloudStorageAccount.Parse(storageConnection);
 
             //create a block blob 
             CloudBlobClient cloudBlobClient = cloudStorageAccount.CreateCloudBlobClient();
-            CloudBlobContainer cloudBlobContainer = cloudBlobClient.GetContainerReference("found");
+             cloudBlobContainer = cloudBlobClient.GetContainerReference("found");
+            }
             var allMeteors = _context.SkyImages.Where(y => y.selectedForTraining == true).Include(x => x.detectedObjects)
                 .ThenInclude(y => y.bbox);
 
@@ -766,11 +773,17 @@ namespace meteorIngest.Controllers
                 xmlTree.FirstNode.AddAfterSelf(new XElement("camera", skyImage.camera));
                 xmlTree.FirstNode.AddAfterSelf(new XElement("dateTaken", skyImage.date));
 
-
+                if (!local)
+                { 
                 CloudBlockBlob cloudBlockBlob = cloudBlobContainer.GetBlockBlobReference(skyImage.filename.Replace(".jpg", ".xml"));
                 cloudBlockBlob.Properties.ContentType = "text/xml";
                 //updload xml
                 await cloudBlockBlob.UploadTextAsync(xmlTree.ToString());
+                }
+                else
+                {
+                    xmlTree.Save("\\home\\site\\wwwroot\\images\\" + skyImage.filename.Replace(".jpg", ".xml"));
+                }
 
             }
 
@@ -778,63 +791,63 @@ namespace meteorIngest.Controllers
             return NoContent();
         }
         [HttpGet("generateXMLlocal/")]
-        public async Task<ActionResult> GenerateXMLlocal()
-        {
+        //public async Task<ActionResult> GenerateXMLlocal()
+        //{
 
 
-            var allMeteors = _context.SkyImages.Include(x => x.detectedObjects)
-                .ThenInclude(y => y.bbox);
+        //    var allMeteors = _context.SkyImages.Include(x => x.detectedObjects)
+        //        .ThenInclude(y => y.bbox);
 
 
-            foreach (SkyImage skyImage in allMeteors)
-            {
-                //generate xml annotation file
-                XElement xmlTree = new XElement("annotation");
+        //    foreach (SkyImage skyImage in allMeteors)
+        //    {
+        //        //generate xml annotation file
+        //        XElement xmlTree = new XElement("annotation");
 
 
-                XElement aFilename = new XElement("filename");
+        //        XElement aFilename = new XElement("filename");
 
-                aFilename.Value = skyImage.filename;
-                xmlTree.Add(aFilename);
-                XElement aSize = new XElement("size");
-                aSize.Add(new XElement("width", skyImage.width));
-                aSize.Add(new XElement("height", skyImage.height));
-                aSize.Add(new XElement("depth", "1"));
-                xmlTree.Add(aSize);
+        //        aFilename.Value = skyImage.filename;
+        //        xmlTree.Add(aFilename);
+        //        XElement aSize = new XElement("size");
+        //        aSize.Add(new XElement("width", skyImage.width));
+        //        aSize.Add(new XElement("height", skyImage.height));
+        //        aSize.Add(new XElement("depth", "1"));
+        //        xmlTree.Add(aSize);
 
-                foreach (SkyObjectDetection sod in skyImage.detectedObjects)
-                {
-                    XElement anObject = new XElement("object");
-                    anObject.Add(new XElement("score", sod.score));
-                    anObject.Add(new XElement("name", sod.skyObjectClass));
-                    XElement bndBox = new XElement("bndbox");
-
-
-
-                    bndBox.Add(new XElement("xmin", sod.bbox.xmin));
-                    bndBox.Add(new XElement("ymin", sod.bbox.ymin));
-                    bndBox.Add(new XElement("xmax", sod.bbox.xmax));
-                    bndBox.Add(new XElement("ymax", sod.bbox.ymax));
-                    anObject.Add(bndBox);
-                    xmlTree.Add(anObject);
-
-
-                }
+        //        foreach (SkyObjectDetection sod in skyImage.detectedObjects)
+        //        {
+        //            XElement anObject = new XElement("object");
+        //            anObject.Add(new XElement("score", sod.score));
+        //            anObject.Add(new XElement("name", sod.skyObjectClass));
+        //            XElement bndBox = new XElement("bndbox");
 
 
 
+        //            bndBox.Add(new XElement("xmin", sod.bbox.xmin));
+        //            bndBox.Add(new XElement("ymin", sod.bbox.ymin));
+        //            bndBox.Add(new XElement("xmax", sod.bbox.xmax));
+        //            bndBox.Add(new XElement("ymax", sod.bbox.ymax));
+        //            anObject.Add(bndBox);
+        //            xmlTree.Add(anObject);
 
 
-                xmlTree.FirstNode.AddAfterSelf(new XElement("camera", skyImage.camera));
-                xmlTree.FirstNode.AddAfterSelf(new XElement("dateTaken", skyImage.date));
-
-                xmlTree.Save("\\home\\site\\wwwroot\\images\\" + skyImage.filename.Replace(".jpg", ".xml"));
-
-            }
+        //        }
 
 
-            return NoContent();
-        }
+
+
+
+        //        xmlTree.FirstNode.AddAfterSelf(new XElement("camera", skyImage.camera));
+        //        xmlTree.FirstNode.AddAfterSelf(new XElement("dateTaken", skyImage.date));
+
+        //        xmlTree.Save("\\home\\site\\wwwroot\\images\\" + skyImage.filename.Replace(".jpg", ".xml"));
+
+        //    }
+
+
+        //    return NoContent();
+        //}
         //[HttpGet("generateXML/")]
         //public async Task<ActionResult> GenerateZip()
         //{
@@ -951,16 +964,10 @@ namespace meteorIngest.Controllers
         [HttpDelete("deleteUnselected/")]
         public async Task<ActionResult<SkyImage>> DeleteUnSelected()
         {
+            if (!local)
+            { 
 
-            string storageConnection = _configuration.GetSection("myStorage").Value;
-            CloudStorageAccount cloudStorageAccount = CloudStorageAccount.Parse(storageConnection);
-
-            //create a block blob 
-            CloudBlobClient cloudBlobClient = cloudStorageAccount.CreateCloudBlobClient();
-
-            //create a container 
-            CloudBlobContainer cloudBlobContainer = cloudBlobClient.GetContainerReference("found");
-
+        }
 
             foreach (SkyImage si in _context.SkyImages.Where(x => x.selectedForTraining == false).Include(c => c.detectedObjects)
                 .ThenInclude(v => v.bbox))
@@ -978,7 +985,61 @@ namespace meteorIngest.Controllers
                 else
                 {
 
+                    string storageConnection = _configuration.GetSection("myStorage").Value;
+                    CloudStorageAccount cloudStorageAccount = CloudStorageAccount.Parse(storageConnection);
 
+                    //create a block blob 
+                    CloudBlobClient cloudBlobClient = cloudStorageAccount.CreateCloudBlobClient();
+
+                    //create a container 
+                    CloudBlobContainer cloudBlobContainer = cloudBlobClient.GetContainerReference("found");
+                    //create a container 
+
+                    CloudBlockBlob cloudBlockBlob = cloudBlobContainer.GetBlockBlobReference(si.filename);
+                    await cloudBlockBlob.DeleteIfExistsAsync();
+                    cloudBlockBlob = cloudBlobContainer.GetBlockBlobReference(si.filename.Replace(".jpg", ".xml"));
+                    await cloudBlockBlob.DeleteIfExistsAsync();
+                }
+                _context.SkyImages.Remove(si);
+
+            }
+            await _context.SaveChangesAsync();
+
+            return null;
+        }
+        // DELETE: api/SkyImages
+        [HttpDelete("deleteImageSet/{id}")]
+        public async Task<ActionResult<SkyImage>> deleteImageSet(int id)
+        {
+            if (!local)
+            {
+
+            }
+
+            foreach (SkyImage si in _context.SkyImages.Where(x => x.imageSet==id).Include(c => c.detectedObjects)
+                .ThenInclude(v => v.bbox))
+            {
+                if (local)
+                {
+                    try
+                    {
+                        System.IO.File.Delete(Path.Combine("\\home\\site\\wwwroot\\images\\", si.filename));
+                    }
+                    catch
+                    { }
+
+                }
+                else
+                {
+
+                    string storageConnection = _configuration.GetSection("myStorage").Value;
+                    CloudStorageAccount cloudStorageAccount = CloudStorageAccount.Parse(storageConnection);
+
+                    //create a block blob 
+                    CloudBlobClient cloudBlobClient = cloudStorageAccount.CreateCloudBlobClient();
+
+                    //create a container 
+                    CloudBlobContainer cloudBlobContainer = cloudBlobClient.GetContainerReference("found");
                     //create a container 
 
                     CloudBlockBlob cloudBlockBlob = cloudBlobContainer.GetBlockBlobReference(si.filename);
