@@ -64,7 +64,16 @@
             </td>
             <td>
                 @{
-                    double highScore = item.DetectedObjects.Where(y => y.SkyObjectClass.Contains("meteor")).Max(b => b.Score);
+                    double highScore = 0;
+                    try
+                    {
+                         highScore = item.DetectedObjects.Where(y => y.SkyObjectClass.Contains("meteor")).Max(b => b.Score);
+                    }
+                    catch
+                    {
+
+                    }
+
                     string s = string.Format("{0:00}%", highScore*100);
                 }
                 @Html.DisplayFor(modelItem=>s)

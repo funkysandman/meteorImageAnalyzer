@@ -45,7 +45,7 @@ namespace meteorIngestApp.Controllers
     {
         private readonly ILogger<HomeController> _logger;
         //private string webAPIurl = "https://imageingest.azurewebsites.net/api/";
-        private string webAPIurl = "http://localhost:58611/api/";
+        private string webAPIurl = "http://localhost:3333/api/";
         public HomeController(ILogger<HomeController> logger)
         {
             _logger = logger;
@@ -364,9 +364,15 @@ namespace meteorIngestApp.Controllers
 
         }
 
-        public IActionResult deleteImageSet(int id)
+        public IActionResult deleteImageSet(int id, int rank, string sortOrder, string currentFilter, string searchString, int? pageNumber)
         {
 
+            skyImageWS.SkyImage image = null;
+            ViewData["CurrentSort"] = sortOrder;
+            ViewData["NameSortParm"] = String.IsNullOrEmpty(sortOrder) ? "name_desc" : "";
+            ViewData["DateSortParm"] = sortOrder == "Date" ? "date_desc" : "Date";
+            ViewData["CurrentPage"] = pageNumber;
+            ViewData["CurrentSearchString"] = searchString;
 
             using (var client = new HttpClient())
             {
@@ -390,7 +396,8 @@ namespace meteorIngestApp.Controllers
                     ModelState.AddModelError(string.Empty, "Server error. Please contact administrator.");
                 }
             }
-            return RedirectToAction("Images");
+            return RedirectToAction("Next", new RouteValueDictionary(
+new { controller = "Home", action = "Next", rank = rank, sortOrder = ViewData["CurrentSort"], currentFilter = ViewData["CurrentFilter"], searchString = ViewData["CurrentSearchString"], pageNumber = ViewData["CurrentPage"] }));
 
         }
         public IActionResult generateXML()

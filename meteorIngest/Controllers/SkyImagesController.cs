@@ -293,7 +293,7 @@ namespace meteorIngest.Controllers
 
         }
 
-        [HttpGet("fullNext/{rank}")]
+        [HttpGet("fullNext/{rank}")] //only bother with unselected ones for now
         public async Task<ActionResult<SkyImage>> GetSkyImageWithJPGNext(int rank)
         {
             //var skyImage = await _context.SkyImages.FindAsync(id);
@@ -301,7 +301,7 @@ namespace meteorIngest.Controllers
                 .Include(x => x.imageData)
                 .Include(c => c.detectedObjects)
                 .ThenInclude(si => si.bbox)
-                .Where(s => s.rank > rank).OrderBy(b => b.rank).FirstOrDefaultAsync();
+                .Where(s => s.rank > rank && s.selectedForTraining==false).OrderBy(b => b.rank).FirstOrDefaultAsync();
 
 
 
@@ -352,7 +352,7 @@ namespace meteorIngest.Controllers
 
         }
 
-        [HttpGet("fullPrev/{rank}")]
+        [HttpGet("fullPrev/{rank}")] //only bother with unselected ones for now
         public async Task<ActionResult<SkyImage>> GetSkyImageWithJPGPrev(int rank)
         {
             //var skyImage = await _context.SkyImages.FindAsync(id);
@@ -360,7 +360,7 @@ namespace meteorIngest.Controllers
                 .Include(x => x.imageData)
                 .Include(c => c.detectedObjects)
                 .ThenInclude(si => si.bbox)
-                .Where(s => s.rank < rank).OrderByDescending(b => b.rank).FirstOrDefaultAsync();
+                .Where(s => s.rank < rank && s.selectedForTraining == false).OrderByDescending(b => b.rank).FirstOrDefaultAsync();
 
 
 
@@ -459,7 +459,13 @@ namespace meteorIngest.Controllers
             {
                 return BadRequest();
             }
-            //
+
+            var si = findImage(skyImage.filename);
+            if (si == null)
+            {
+
+
+            
             //check for image intersections
             //
             //new set or existing set
@@ -519,6 +525,20 @@ namespace meteorIngest.Controllers
                 //
                 //generate xml annotation file
             }
+            }
+            else
+            {
+                //combine detections
+                foreach (SkyObjectDetection sod in skyImage.detectedObjects)
+                {
+                    sod.skyObjectID = si.detectedObjects.Max(b => b.skyObjectID) + 1;
+                    sod.bbox.boundingBoxId = si.detectedObjects.Max(b => b.bbox.boundingBoxId)+1;
+                    sod.skyObjectClass = "TEST:" + sod.skyObjectClass;
+                    sod.skyImageId = skyImage.skyImageId;
+                    si.detectedObjects.Add(sod);
+                }
+              
+            }
             XElement xmlTree = new XElement("annotation");
 
 
@@ -567,12 +587,32 @@ namespace meteorIngest.Controllers
 
             //
             skyImage.imageData.imageData = "";//erase image from database
-            _context.SkyImages.Add(skyImage);
-            await _context.SaveChangesAsync();
+            if (si!=null)
+            {
+                _context.SkyImages.Update(si);
+                await _context.SaveChangesAsync();
+                return CreatedAtAction(nameof(GetSkyImage), new { id = si.skyImageId }, si);
+            }
+            else {
+                _context.SkyImages.Add(skyImage);
+                await _context.SaveChangesAsync();
+                return CreatedAtAction(nameof(GetSkyImage), new { id = skyImage.skyImageId }, skyImage);
+            }
+            
 
-            return CreatedAtAction(nameof(GetSkyImage), new { id = skyImage.skyImageId }, skyImage);
+            
         }
+        
+        //find an image by filename
+        private SkyImage findImage(string file)
+        {
 
+            SkyImage si = _context.SkyImages.Where(c => c.filename == file).Include(x => x.detectedObjects)
+                .ThenInclude(y => y.bbox).FirstOrDefault();
+            return si;
+
+
+        }
         private int findImageSet(SkyImage si)
         {
             //gather all images from the last 60 seconds with same camera
