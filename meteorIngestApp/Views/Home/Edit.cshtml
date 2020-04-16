@@ -20,14 +20,16 @@
     border-radius: 50%;
     cursor: none;
     /*Set the size of the magnifier glass:*/
-    width: 100px;
-    height: 100px;
+    width: 300px;
+    height: 300px;
 }
 
 </style>
 
 
 <hr />
+<img id="myImage" src="data:image/png;base64,@Html.DisplayFor(model => model.ImageData.ImageData1)"  width="0" height="0"/>
+
 <div class="row">
     <div class="col-md-4">
         @Html.ActionLink("Prev", "Prev", new { rank = Model.Rank, sortOrder = ViewData["CurrentSort"], searchString = ViewData["CurrentFilter"], pageNumber = ViewData["CurrentPage"] })
@@ -54,28 +56,25 @@
             <input class="form-check-input" asp-for="SelectedForTraining" /> @Html.DisplayNameFor(model => model.SelectedForTraining)
         </label>
     </div>
+    
      <div>
-         
-         <svg  id="SVG1" width="100%" height="100%" viewBox="0 0 @Model.Width @Model.Height">
+         <div class="img-magnifier-container">
+             <svg id="SVG1" width="100%" height="100%" viewBox="0 0 @Model.Width @Model.Height">
 
-
-
-             <div class="img-magnifier-container">
-
-                 <img id="myImage" src="data:image/png;base64,@Html.DisplayFor(model => model.ImageData.ImageData1)" width="1000" height="800" />
+                 <image id="myImage2" href="data:image/png;base64,@Html.DisplayFor(model => model.ImageData.ImageData1)"  width="100%" height="100%" />
                  @foreach (var skyThing in Model.DetectedObjects)
                  {
                      <rect x="@(skyThing.Bbox.Xmin)" y="@skyThing.Bbox.Ymin" width="@(skyThing.Bbox.Xmax-skyThing.Bbox.Xmin)" height="@(skyThing.Bbox.Ymax-skyThing.Bbox.Ymin)" style="stroke:pink;fill-opacity:0;stroke-width:2">
                      </rect>
                      @: <text x="@(skyThing.Bbox.Xmin)" y="@(skyThing.Bbox.Ymin-20)" style="stroke:red">@skyThing.SkyObjectClass&nbsp; @(Math.Round(skyThing.Score * 100))% </text>
                  }
-             </div>
-         </svg>
-        
+
+             </svg>
+
+         </div>
 
 
 
-        
 
 
          <div class="row">
@@ -163,61 +162,77 @@
     <a asp-action="Index">Back to List</a>
 </div>
 <script>
-    function magnify(imgID, zoom) {
-
-        var img, glass, w, h, bw;
+    function magnify(imgID,svgID, zoom) {
+        
+        var img, svg, glass, w, h, bw,z;
+        z = zoom;
         img = document.getElementById(imgID);
-       
+        svg = document.getElementById(svgID);
+
         /* Create magnifier glass: */
         glass = document.createElement("DIV");
         glass.setAttribute("class", "img-magnifier-glass");
 
         /* Insert magnifier glass: */
-        img.parentElement.insertBefore(glass, img);
+        svg.parentElement.insertBefore(glass, svg);
         
         /* Set background properties for the magnifier glass: */
-        glass.style.backgroundImage = "url('" + img.src + "')";
+        glass.style.backgroundImage= "url('" + img.src + "')";
 
         
         glass.style.backgroundRepeat = "no-repeat";
         glass.style.backgroundSize = (@Model.Width * zoom) + "px " + (@Model.Height * zoom) + "px";
        
-        bw = 3;
-        w = glass.offsetWidth / 2;
+        bw = 0;//borderwidth
+        w = glass.offsetWidth / 2; //?
         h = glass.offsetHeight / 2;
 
         /* Execute a function when someone moves the magnifier glass over the image: */
         glass.addEventListener("mousemove", moveMagnifier);
-        img.addEventListener("mousemove", moveMagnifier);
+        svg.addEventListener("mousemove", moveMagnifier);
 
         /*and also for touch screens:*/
-        glass.addEventListener("touchmove", moveMagnifier);
-        img.addEventListener("touchmove", moveMagnifier);
+        //glass.addEventListener("touchmove", moveMagnifier);
+        //svg.addEventListener("touchmove", moveMagnifier);
        
  
 
     function moveMagnifier(e) {
-        var pos, x, y;
-         
+        var pos, x, y, scaleX, scaleY, bBox, w, h;
+
+        w = glass.offsetWidth / 2; //?
+        h = glass.offsetHeight / 2;
         /* Prevent any other actions that may occur when moving over the image */
        // e.preventDefault();
     /* Get the cursor's x and y positions: */
-       
+        bBox = img.getBoundingClientRect();
+        //alert(bBox.width);
         pos = getCursorPos(e);
-      
+       
+        //alert(svg.getBoundingClientRect().width);
+
         x = pos.x;
         y = pos.y;
+        scaleX = svg.getBoundingClientRect().width / svg.getBBox().width;
+        scaleY = svg.getBoundingClientRect().height / svg.getBBox().height;
         /* Prevent the magnifier glass from being positioned outside the image: */
-        if (x > img.width - (w / zoom)) { x = img.width - (w / zoom); }
-        if (x < w / zoom) { x = w / zoom; }
-        if (y > img.height - (h / zoom)) { y = img.height - (h / zoom); }
-        if (y < h / zoom) { y = h / zoom; }
+        //if (x > bBox.offsetWidth) { x = bBox.offsetWidth; }
+        if (x < 0) { x = 0 ; }
+        //if (y > bBox.height-h/zoom  ) { y = bBox.height-h/zoom  ; }
+        if (y < 0 ) { y = 0; }
         /* Set the position of the magnifier glass: */
         glass.style.left = (x - w) + "px";
         glass.style.top = (y - h) + "px";
-        /* Display what the magnifier glass "sees": */
-        glass.style.backgroundPosition = "-" + ((x * zoom) - w + bw) + "px -" + ((y * zoom) - h + bw) + "px";
-        
+    /* Display what the magnifier glass "sees": */
+        var xpos, ypos;
+
+        xpos = x * zoom / scaleX;
+        ypos = y * zoom / scaleY;
+        xpos = xpos - w;
+        ypos = ypos - h;
+        glass.style.backgroundPosition = "-" + xpos+ "px -" + ypos +"px";
+       //glass.style.backgroundPosition = w   + "px " + h +"px";
+       
     }
 
     function getCursorPos(e) {
@@ -227,7 +242,7 @@
         
     /* Get the x and y positions of the image: */
        
-        a = img.getBoundingClientRect();
+        a = svg.getBoundingClientRect();
         
         /* Calculate the cursor's x and y coordinates, relative to the image: */
         x = e.pageX - a.left;
@@ -245,7 +260,7 @@
 
     //}
 
-    window.onload =  magnify("myImage",3);
+    window.onload =  magnify("myImage","SVG1",3);
 
 </script>
 @section Scripts {
