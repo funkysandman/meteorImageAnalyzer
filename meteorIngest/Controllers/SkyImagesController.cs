@@ -13,7 +13,6 @@ using Microsoft.WindowsAzure.Storage;
 using Microsoft.WindowsAzure.Storage.Blob;
 using System.Text;
 using System.Xml.Linq;
-using Microsoft.Azure.KeyVault;
 using Microsoft.IdentityModel.Clients.ActiveDirectory;
 using Microsoft.IdentityModel.Protocols;
 using System.Configuration;
@@ -294,17 +293,17 @@ namespace meteorIngest.Controllers
         }
 
         [HttpGet("fullNext/{rank}")] //only bother with unselected ones for now
-        public async Task<ActionResult<SkyImage>> GetSkyImageWithJPGNext(int rank)
+        public async Task<ActionResult<SkyImage>> GetSkyImageWithJPGNext(int rank,bool allImages)
         {
             //var skyImage = await _context.SkyImages.FindAsync(id);
-            var skyImage = await _context.SkyImages
-                .Include(x => x.imageData)
-                .Include(c => c.detectedObjects)
-                .ThenInclude(si => si.bbox)
-                .Where(s => s.rank > rank && s.selectedForTraining==false).OrderBy(b => b.rank).FirstOrDefaultAsync();
 
-
-
+                 var skyImage = await _context.SkyImages
+                    .Include(x => x.imageData)
+                    .Include(c => c.detectedObjects)
+                    .ThenInclude(si => si.bbox)
+                    .Where(s => s.rank > rank && (s.selectedForTraining == false || allImages)).OrderBy(b => b.rank).FirstOrDefaultAsync();
+       
+       
 
 
 
@@ -353,14 +352,14 @@ namespace meteorIngest.Controllers
         }
 
         [HttpGet("fullPrev/{rank}")] //only bother with unselected ones for now
-        public async Task<ActionResult<SkyImage>> GetSkyImageWithJPGPrev(int rank)
+        public async Task<ActionResult<SkyImage>> GetSkyImageWithJPGPrev(int rank, bool allImages)
         {
             //var skyImage = await _context.SkyImages.FindAsync(id);
             var skyImage = await _context.SkyImages
                 .Include(x => x.imageData)
                 .Include(c => c.detectedObjects)
                 .ThenInclude(si => si.bbox)
-                .Where(s => s.rank < rank && s.selectedForTraining == false).OrderByDescending(b => b.rank).FirstOrDefaultAsync();
+                .Where(s => s.rank < rank && (s.selectedForTraining == false || allImages)).OrderByDescending(b => b.rank).FirstOrDefaultAsync();
 
 
 
@@ -719,10 +718,44 @@ namespace meteorIngest.Controllers
 
 
             //assign rank
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
             await _context.SaveChangesAsync();
             int rank = 1;
             var imageList = _context.SkyImages
-                    .FromSqlRaw("Select * from SkyImages a order by  (select count(*) from SkyImages c where c.imageSet = a.imageSet),(select max(score) from SkyObjectDetection where skyImageId=a.skyImageId and skyObjectClass like '%meteor') desc")
+                  //  .FromSqlRaw("Select * from SkyImages a order by  (select count(*) from SkyImages c where c.imageSet = a.imageSet),(select max(score) from SkyObjectDetection where skyImageId=a.skyImageId and skyObjectClass like '%meteor') desc")
+                      .FromSqlRaw("Select * from SkyImages a order by  (select max(score) from SkyObjectDetection where skyImageId=a.skyImageId and skyObjectClass like '%meteor') desc")
+
                     .ToList<SkyImage>();
             foreach (SkyImage skyI in imageList)
             {
@@ -1056,7 +1089,7 @@ namespace meteorIngest.Controllers
 
             }
 
-            foreach (SkyImage si in _context.SkyImages.Where(x => x.imageSet==id).Include(c => c.detectedObjects)
+            foreach (SkyImage si in _context.SkyImages.Where(x => x.imageSet==id && x.selectedForTraining==false).Include(c => c.detectedObjects)
                 .ThenInclude(v => v.bbox))
             {
                 if (local)

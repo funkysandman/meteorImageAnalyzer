@@ -2,6 +2,7 @@
 
 @{
     ViewData["Title"] = "Edit";
+    ViewData["allImages"] = true;
     Layout = "~/Views/Shared/_Layout.cshtml";
 }
 <style>
@@ -32,11 +33,12 @@
 
 <div class="row">
     <div class="col-md-4">
-        @Html.ActionLink("Prev", "Prev", new { rank = Model.Rank, sortOrder = ViewData["CurrentSort"], searchString = ViewData["CurrentFilter"], pageNumber = ViewData["CurrentPage"] })
+        @Html.ActionLink("Prev", "Prev", new { rank = Model.Rank, sortOrder = ViewData["CurrentSort"], searchString = ViewData["CurrentFilter"], pageNumber = ViewData["CurrentPage"],allImages=ViewData["allImages"] })
 
     </div>
     <div class="col-md-4">
-        @Html.ActionLink("Next", "Next", new { rank = Model.Rank, sortOrder = ViewData["CurrentSort"], searchString = ViewData["CurrentFilter"], pageNumber = ViewData["CurrentPage"] })
+        @Html.ActionLink("Next", "Next", new { rank = Model.Rank, sortOrder = ViewData["CurrentSort"], searchString = ViewData["CurrentFilter"], pageNumber = ViewData["CurrentPage"],allImages=ViewData["allImages"]})
+
     </div>
 </div>
 <form asp-action="Save">
@@ -190,12 +192,33 @@
         /* Execute a function when someone moves the magnifier glass over the image: */
         glass.addEventListener("mousemove", moveMagnifier);
         svg.addEventListener("mousemove", moveMagnifier);
+        glass.addEventListener("mousedown", toggleGlassOff);
+        svg.addEventListener("mousedown", toggleGlassOn);
 
+          glass.style = "visibility:hidden";
         /*and also for touch screens:*/
         //glass.addEventListener("touchmove", moveMagnifier);
         //svg.addEventListener("touchmove", moveMagnifier);
-       
- 
+        
+        function toggleGlassOff(e) {
+
+            glass.style = "visibility:hidden";
+
+            }
+            
+            function toggleGlassOn(e) {
+
+                glass.style = "visibility:visible";
+        
+            glass.style.backgroundImage= "url('" + img.src + "')";
+
+        
+        glass.style.backgroundRepeat = "no-repeat";
+        glass.style.backgroundSize = (@Model.Width * zoom) + "px " + (@Model.Height * zoom) + "px";
+                moveMagnifier(e);
+
+           // magnify("myImage","SVG1",3);
+        }
 
     function moveMagnifier(e) {
         var pos, x, y, scaleX, scaleY, bBox, w, h;
@@ -260,7 +283,8 @@
 
     //}
 
-    window.onload =  magnify("myImage","SVG1",3);
+    window.onload = magnify("myImage", "SVG1", 3);
+  
 
 </script>
 @section Scripts {

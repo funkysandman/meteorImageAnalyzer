@@ -45,7 +45,7 @@ namespace meteorIngestApp.Controllers
     {
         private readonly ILogger<HomeController> _logger;
         //private string webAPIurl = "https://imageingest.azurewebsites.net/api/";
-        private string webAPIurl = "http://localhost:3333/api/";
+        private string webAPIurl = "http://localhost:3344/api/";
         public HomeController(ILogger<HomeController> logger)
         {
             _logger = logger;
@@ -106,8 +106,8 @@ namespace meteorIngestApp.Controllers
                             break;
                     }
                     //return View(await images.ToList());
-                    //ViewBag.NameSortParm = String.IsNullOrEmpty(sortOrder) ? "name_desc" : "";
-                    //ViewBag.DateSortParm = sortOrder == "Date" ? "date_desc" : "Date";
+                    ViewBag.NameSortParm = String.IsNullOrEmpty(sortOrder) ? "name_desc" : "";
+                    ViewBag.DateSortParm = sortOrder == "Date" ? "date_desc" : "Date";
 
                     if (!String.IsNullOrEmpty(searchString))
                     {
@@ -194,7 +194,7 @@ namespace meteorIngestApp.Controllers
             }
             return View(image);
         }
-        public IActionResult next(int rank, string sortOrder, string currentFilter, string searchString, int? pageNumber)
+        public IActionResult next(int rank, string sortOrder, string currentFilter, string searchString, bool allImages, int? pageNumber)
         {
 
             skyImageWS.SkyImage image = null;
@@ -230,7 +230,7 @@ namespace meteorIngestApp.Controllers
             }
             return RedirectToAction("Edit", new { id = image.SkyImageId, pageNumber = pageNumber });
         }
-        public IActionResult prev(int rank, string sortOrder, string currentFilter, string searchString, int? pageNumber)
+        public IActionResult prev(int rank, string sortOrder, string currentFilter, string searchString, bool allImages, int? pageNumber)
         {
 
             skyImageWS.SkyImage image = null;

@@ -7,7 +7,7 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.EntityFrameworkCore;
 using MeteorIngestAPI.Models;
-using Microsoft.OpenApi.Models;
+
 
 namespace MeteorIngestAPI
 {
@@ -31,10 +31,10 @@ namespace MeteorIngestAPI
             services.AddDbContext<MeteorIngestContext>(opt => opt.UseSqlite("SkyImages"));
             services.AddControllers();
             services.AddMvcCore().AddApiExplorer();
-            services.AddSwaggerGen(c =>
-            {
-                c.SwaggerDoc("v1", new OpenApiInfo { Title = "My API", Version = "v1" });
-            });
+            //services.AddSwaggerGen(c =>
+            //{
+            //    c.SwaggerDoc("v1", new OpenApiInfo { Title = "My API", Version = "v1" });
+            //});
             services.Configure<connectStr>(Configuration.GetSection("myStorage"));
         }
 
