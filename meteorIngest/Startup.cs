@@ -1,12 +1,14 @@
 
+using MeteorIngestAPI.Models;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
-using Microsoft.EntityFrameworkCore;
-using MeteorIngestAPI.Models;
+using System;
+using System.IO;
 
 
 namespace MeteorIngestAPI
@@ -27,14 +29,23 @@ namespace MeteorIngestAPI
 
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
+
         {
-            services.AddDbContext<MeteorIngestContext>(opt => opt.UseSqlite("SkyImages"));
+            var dbPath = Path.Combine(
+                    Environment.CurrentDirectory,
+                    "skyImages.db"
+                );
+
+            services.AddDbContext<MeteorIngestContext>(options =>
+                options.UseSqlite($"Data Source={dbPath}")
+            );
+            services.AddSwaggerGen();
             services.AddControllers();
             services.AddMvcCore().AddApiExplorer();
-            //services.AddSwaggerGen(c =>
-            //{
-            //    c.SwaggerDoc("v1", new OpenApiInfo { Title = "My API", Version = "v1" });
-            //});
+            services.AddSwaggerGen(c =>
+            {
+                c.SwaggerDoc("v1", new Microsoft.OpenApi.Models.OpenApiInfo { Title = "My API", Version = "v1" });
+            });
             services.Configure<connectStr>(Configuration.GetSection("myStorage"));
         }
 

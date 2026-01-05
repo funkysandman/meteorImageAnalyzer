@@ -12,8 +12,6 @@ namespace MeteorIngestAPI.Models
             : base(options)
         { }
 
-        protected override void OnConfiguring(DbContextOptionsBuilder options)
-            => options.UseSqlite("Data Source=skyImages.db");
         public DbSet<SkyImage> SkyImages { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)

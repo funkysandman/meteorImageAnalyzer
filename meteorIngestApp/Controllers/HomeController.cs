@@ -45,7 +45,7 @@ namespace meteorIngestApp.Controllers
     {
         private readonly ILogger<HomeController> _logger;
         //private string webAPIurl = "https://imageingest.azurewebsites.net/api/";
-        private string webAPIurl = "http://localhost:3344/api/";
+        private string webAPIurl = "http://localhost:3333/api/";
         public HomeController(ILogger<HomeController> logger)
         {
             _logger = logger;
